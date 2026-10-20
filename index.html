@@ -39,6 +39,76 @@
         canvas_context.putImageData(canvas_buffer, 0, 0);
 
 
+        // we're going to use a left-handed coordinate system, where the camera points toward the +Z axis
+
+
+        // let's now start describing our scene
+
+        const camera = {
+            center: {
+                x: 0,
+                y: 0,
+                z: 0
+            },
+            direction: {
+                x: 0,
+                y: 0,
+                z: 1
+            }
+        };
+
+        const spheres = [
+            {
+                name: "s1",
+                center: {
+                    x: -0.5,
+                    y: 0.5,
+                    z: 2.0
+                },
+                radius: 0.2,
+                color: "red"
+            },
+            {
+                name: "s2",
+                center: {
+                    x: 0,
+                    y: 0,
+                    z: 1.5
+                },
+                radius: 0.15,
+                color: "green"
+            },
+            {
+                name: "s3",
+                center: {
+                    x: 0.5,
+                    y: -0.5,
+                    z: 2.5
+                },
+                radius: 0.25,
+                color: "blue"
+            }
+        ];
+
+        // let's define the viewport with two points so that its plane is implied
+        const viewport = {
+            topLeft: {
+                x: -1.0,
+                y: 1.0,
+                z: 1.0
+            },
+            bottomRight: {
+                x: 1.0,
+                y: -1.0,
+                z: 1.0
+            }
+        };
+
+
+
+
+
+
 
 
 

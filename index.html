@@ -16,19 +16,19 @@
         // let's implement the ray tracer here
 
         const size = 500;
-        const width = size;
-        const height = size;
+        const canvasWidth = size;
+        const canvasHeight = size;
 
         const canvas = document.querySelector("canvas");
         const canvas_context = canvas.getContext("2d");
-        const canvas_buffer = canvas_context.getImageData(0, 0, width, height);
+        const canvas_buffer = canvas_context.getImageData(0, 0, canvasWidth, canvasHeight);
 
         // let's start by painting the canvas red, pixel by pixel
         // the buffer gets filled with [px 00 r, px 00 g, px 00 b, px 00 a, px 01 r, px 01 g, px 01 b, px 01 a, ...]
 
-        for (let row = 0; row < height; row++) {
-            for (let col = 0; col < width; col++) {
-                const redIndex = 4 * (width * row + col);
+        for (let row = 0; row < canvasHeight; row++) {
+            for (let col = 0; col < canvasWidth; col++) {
+                const redIndex = 4 * (canvasWidth * row + col);
                 canvas_buffer.data[redIndex] = 255; // r
                 canvas_buffer.data[redIndex + 1] = 0; // g
                 canvas_buffer.data[redIndex + 2] = 0; // b
@@ -101,11 +101,47 @@
                 x: 1.0,
                 y: -1.0,
                 z: 1.0
+            },
+            get top() {
+                return this.topLeft.y;
+            },
+            get bottom() {
+                return this.bottomRight.y;
+            },
+            get left() {
+                return this.topLeft.x;
+            },
+            get right() {
+                return this.bottomRight.x;
+            },
+            get height() {
+                return this.top - this.bottom;
+            },
+            get width() {
+                return this.right - this.left;
             }
         };
 
 
+        // now that the scene is set up, we can actually render it to the canvas
 
+        // let's begin setting up the ray tracer
+        // we will be casting one ray per pixel, from the camera center to the pixel center
+
+        const pixelWidth = viewport.width / canvasWidth;
+        const pixelHeight = viewport.height / canvasHeight;
+
+        for (let row = 0; row < canvasHeight; row++) {
+            for (let col = 0; col < canvasWidth; col++) {
+                // determine the location in 3D of the center of this pixel
+
+                const pixelCenter = {
+                    x: viewport.left + (pixelWidth / 2) + (col * pixelWidth),
+                    y: viewport.top - (pixelHeight / 2) - (row * pixelHeight),
+                    z: viewport.topLeft.z // all pixels are somewhere on the viewport plane
+                };
+            }
+        }
 
 
 

@@ -15,11 +15,30 @@
     <script>
         // let's implement the ray tracer here
 
+        const size = 500;
+        const width = size;
+        const height = size;
+
         const canvas = document.querySelector("canvas");
         const canvas_context = canvas.getContext("2d");
-        const canvas_buffer = canvas_context.getImageData(0, 0, 500, 500);
+        const canvas_buffer = canvas_context.getImageData(0, 0, width, height);
 
-        // let's start by painting
+        // let's start by painting the canvas red, pixel by pixel
+        // the buffer gets filled with [px 00 r, px 00 g, px 00 b, px 00 a, px 01 r, px 01 g, px 01 b, px 01 a, ...]
+
+        for (let row = 0; row < height; row++) {
+            for (let col = 0; col < width; col++) {
+                const redIndex = 4 * (width * row + col);
+                canvas_buffer.data[redIndex] = 255; // r
+                canvas_buffer.data[redIndex + 1] = 0; // g
+                canvas_buffer.data[redIndex + 2] = 0; // b
+                canvas_buffer.data[redIndex + 3] = 255 // a
+            }
+        }
+
+        canvas_context.putImageData(canvas_buffer, 0, 0);
+
+
 
 
 
@@ -28,3 +47,15 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+

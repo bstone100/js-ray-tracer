@@ -26,6 +26,18 @@
         // let's start by painting the canvas red, pixel by pixel
         // the buffer gets filled with [px 00 r, px 00 g, px 00 b, px 00 a, px 01 r, px 01 g, px 01 b, px 01 a, ...]
 
+        function writeCanvasPixel(x, y, color) {
+            const offset = 4 * (canvasWidth * y + x);
+            canvas_buffer.data[offset] = color.r;
+            canvas_buffer.data[offset + 1] = color.g;
+            canvas_buffer.data[offset + 2] = color.b;
+            canvas_buffer.data[offset + 3] = color.a;
+        }
+
+        function updateCanvas() {
+            canvas_context.putImageData(canvas_buffer, 0, 0);
+        }
+
         for (let row = 0; row < canvasHeight; row++) {
             for (let col = 0; col < canvasWidth; col++) {
                 const redIndex = 4 * (canvasWidth * row + col);
@@ -66,7 +78,12 @@
                     z: 2.0
                 },
                 radius: 0.2,
-                color: "red",
+                color: {
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                    a: 255
+                },
                 type: "sphere"
             },
             {
@@ -77,7 +94,12 @@
                     z: 1.5
                 },
                 radius: 0.15,
-                color: "green",
+                color: {
+                    r: 0,
+                    g: 255,
+                    b: 0,
+                    a: 255
+                },
                 type: "sphere"
             },
             {
@@ -88,7 +110,12 @@
                     z: 2.5
                 },
                 radius: 0.25,
-                color: "blue",
+                color: {
+                    r: 0,
+                    g: 0,
+                    b: 255,
+                    a: 255
+                },
                 type: "sphere"
             }
         ];
@@ -136,6 +163,13 @@
                 z: vec1.z - vec2.z
             };
         }
+
+        const white = {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 255
+        };
 
 
         // now that the scene is set up, we can actually render it to the canvas
@@ -202,15 +236,26 @@
                                 closest_object = object;
                             }
                         }
-
                     }
+                }
+
+                // now we know if the ray hit any objects, and if so which object is the closest to the camera
+
+                if (closest_object) {
+                    // we can now color this pixel with the closest object's color
+                    writeCanvasPixel(col, row, closest_object.color);
+                } else {
+                    // otherwise, let's color the pixel white
+                    writeCanvasPixel(col, row, white);
                 }
             }
         }
 
+        // now that the canvas buffer has been updated, let's make the screen update
+        updateCanvas();
 
-
-
+        // now... everything should work...
+        // hooray! it works!
 
 
     </script>

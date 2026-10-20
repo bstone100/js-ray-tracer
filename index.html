@@ -57,7 +57,7 @@
             }
         };
 
-        const spheres = [
+        const scene = [
             {
                 name: "s1",
                 center: {
@@ -66,7 +66,8 @@
                     z: 2.0
                 },
                 radius: 0.2,
-                color: "red"
+                color: "red",
+                type: "sphere"
             },
             {
                 name: "s2",
@@ -76,7 +77,8 @@
                     z: 1.5
                 },
                 radius: 0.15,
-                color: "green"
+                color: "green",
+                type: "sphere"
             },
             {
                 name: "s3",
@@ -86,7 +88,8 @@
                     z: 2.5
                 },
                 radius: 0.25,
-                color: "blue"
+                color: "blue",
+                type: "sphere"
             }
         ];
 
@@ -122,6 +125,18 @@
             }
         };
 
+        function dot(vec1, vec2) {
+            return (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z);
+        }
+
+        function sub(vec1, vec2) {
+            return {
+                x: vec1.x - vec2.x,
+                y: vec1.y - vec2.y,
+                z: vec1.z - vec2.z
+            };
+        }
+
 
         // now that the scene is set up, we can actually render it to the canvas
 
@@ -140,6 +155,56 @@
                     y: viewport.top - (pixelHeight / 2) - (row * pixelHeight),
                     z: viewport.topLeft.z // all pixels are somewhere on the viewport plane
                 };
+
+                const ray = {
+                    origin: camera.center,
+                    direction: pixelCenter
+                };
+
+                // now it's time to cast our ray and see what it hits
+                // we want to determine if the ray hits any objects, and if so, which object is the closest to the camera
+                // then, we can paint this pixel with the color of that object
+
+                let min_t = Infinity; // the lowest t value
+                let closest_object = null;
+
+                // let's start by looping through our scene (which is a 1D array of objects now, but could be a tree of objects later)
+                for (const object of scene) {
+                    // we are just going to handle spheres for now
+                    if (object.type === "sphere") {
+                        // we need to determine if there is a point along the ray which is also on the surface of the sphere
+                        // we can describe the sphere as |C - P| = r, meaning the length of the vector from any point P on the sphere surface to the sphere center C is equal to the sphere radius
+                        // we can describe the ray as P(t) = Q + td, where Q is the ray origin, d is the ray direction, t is a scalar
+                        // this means that any point P along the ray has a value t such that Q + td = P
+
+                        // we are looking for a point P that satisfies both the sphere surface equation and the ray equation
+                        // this means we can insert the ray equation into the sphere surface equation like this: |C - (Q + td)| = r
+                        // now, we just need to solve this equation for t, meaning we need to determine if there is a value of t that makes the equation true
+
+                        // when you work through the linear algebra, you find that this equation is quadratic and can be solved with the quadratic formula, which I'm about to do:
+
+                        const a = dot(ray.direction, ray.direction);
+                        const b = -2 * dot(ray.direction, sub(object.center, ray.origin));
+                        const c = dot(sub(object.center, ray.origin), sub(object.center, ray.origin)) - Math.pow(object.radius, 2);
+
+                        const discriminant = Math.pow(b, 2) - 4 * a * c;
+
+                        // if there are one or two intersection points
+                        if (discriminant >= 0) {
+                            // we just need the smaller t value for now because the hit point is closer to the camera
+                            const t = (-b - Math.sqrt(discriminant)) / (2 * a);
+
+                            // with this t value, we now can compute exactly where our ray hits this sphere
+                            // but we don't need to do that quite yet
+
+                            if (t < min_t) {
+                                min_t = t;
+                                closest_object = object;
+                            }
+                        }
+
+                    }
+                }
             }
         }
 

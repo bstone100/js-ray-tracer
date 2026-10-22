@@ -216,6 +216,30 @@
             };
         }
 
+        function add(vec1, vec2) {
+            return {
+                x: vec1.x + vec2.x,
+                y: vec1.y + vec2.y,
+                z: vec1.z + vec2.z
+            };
+        }
+
+        function scale(scalar, vec) {
+            return {
+                x: scalar * vec.x,
+                y: scalar * vec.y,
+                z: scalar * vec.z
+            };
+        }
+
+        function vecLength(vec) {
+            return Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.y, 2) + Math.pow(vec.z, 2));
+        }
+
+        function normalize(vec) {
+            return scale(1 / vecLength(vec), vec);
+        }
+
         const white = {
             r: 255,
             g: 255,
@@ -369,7 +393,32 @@
 
                     if (closest_object) {
                         // we can now color this pixel with the closest object's color
-                        writeCanvasPixel(col, row, closest_object.color, canvasBuffer, canvasWidth);
+
+
+                        // let's shade our sphere using the surface normal at our hit point
+                        // surface normal is vector P - C, where P is a point on the surface and C is the center
+
+
+                        // we need to calculate P using t
+                        // P(t) = Q + td, where Q is ray origin, d is ray direction
+
+                        const hitPoint = add(ray.origin, scale(min_t, ray.direction));
+
+                        const surfaceNormal = sub(hitPoint, closest_object.center);
+
+                        // the trick for shading a pixel from a surface normal is to map the surface normal coordinates to r g b
+                        // first normalize the vector, then map values from [-1, 1] to [0, 255]
+
+                        const normalized = normalize(surfaceNormal);
+
+                        const color = {
+                            r: (normalized.x + 1) / 2 * 255,
+                            g: (normalized.y + 1) / 2 * 255,
+                            b: (normalized.z + 1) / 2 * 255,
+                            a: 255
+                        };
+
+                        writeCanvasPixel(col, row, color, canvasBuffer, canvasWidth);
                     } else {
                         // otherwise, let's color the pixel white
                         writeCanvasPixel(col, row, white, canvasBuffer, canvasWidth);

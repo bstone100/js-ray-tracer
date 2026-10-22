@@ -51,6 +51,14 @@
                         y: 0,
                         z: 1
                     },
+                    // I am going to temporarily hard code the transform matrix until I write better utilities
+                    // this transform is equivalent to the above center and direction values, where direction means the forward basis vector of the camera in world coordinates
+                    transform: [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, -1],
+                        [0, 0, 0, 1]
+                    ],
                     focalLength: 2.0,
                     fieldOfView: 60.0 // degrees
                 }
@@ -69,6 +77,12 @@
                         y: 0,
                         z: 0
                     },
+                    transform: [
+                        [0, 0, -1, 1],
+                        [0, 1, 0, 0],
+                        [1, 0, 0, 0],
+                        [0, 0, 0, 1]
+                    ],
                     focalLength: 2.0,
                     fieldOfView: 60.0
                 }
@@ -87,6 +101,12 @@
                         y: -1,
                         z: 0
                     },
+                    transform: [
+                        [1, 0, 0, 0],
+                        [0, 0, -1, 1],
+                        [0, 1, 0, 0],
+                        [0, 0, 0, 1]
+                    ],
                     focalLength: 2.0,
                     fieldOfView: 60.0
                 }
@@ -216,6 +236,31 @@
             canvasContext.putImageData(canvasBuffer, 0, 0);
         }
 
+        function degreesToRadians(degrees) {
+            return degrees / 180 * Math.PI;
+        }
+
+        function dotVecArrays(vec1, vec2) {
+            let ret = 0;
+            for (let i = 0; i < vec1.length; i++) {
+                ret += vec1[i] * vec2[i];
+            }
+            return ret;
+        }
+
+        function transformPoint(transform, point) {
+            // transform is 4x4 matrix, point is object with x, y, z
+            // we'll return a point in the same form as the param
+
+            const vec = [point.x, point.y, point.z, 1];
+
+            return {
+                x: dotVecArrays(transform[0], vec),
+                y: dotVecArrays(transform[1], vec),
+                z: dotVecArrays(transform[2], vec)
+            };
+        }
+
 
         // let's now loop through each view and render them separately
 
@@ -224,34 +269,56 @@
 
             const canvasWidth = view.canvas.width;
             const canvasHeight = view.canvas.height;
-            const context = view.canvas.getContext("2d");
-            const buffer = context.getImageData(0, 0, canvasWidth, canvasHeight);
+            const canvasContext = view.canvas.getContext("2d");
+            const canvasBuffer = canvasContext.getImageData(0, 0, canvasWidth, canvasHeight);
 
             // we need to calculate some information about the viewport before we can ray trace
             // we need its width, height, top, left
             // these can all be calculated from the camera properties
 
+            // viewport width can be calculated with width = 2 * focal length * tan(fov / 2)
 
+            const viewportWidth = 2 * view.camera.focalLength * Math.tan(degreesToRadians(view.camera.fieldOfView) / 2);
+            const viewportHeight = viewportWidth;
+            const viewportLeft = - viewportWidth / 2;
+            const viewportTop = viewportHeight / 2;
+            const viewportZ = view.camera.focalLength;
 
             // let's begin setting up the ray tracer
             // we will be casting one ray per pixel, from the camera center to the pixel center
 
-            const pixelWidth = viewport.width / canvasWidth;
-            const pixelHeight = viewport.height / canvasHeight;
+            const pixelWidth = viewportWidth / canvasWidth;
+            const pixelHeight = viewportHeight / canvasHeight;
 
             for (let row = 0; row < canvasHeight; row++) {
                 for (let col = 0; col < canvasWidth; col++) {
                     // determine the location in 3D of the center of this pixel
 
+
+                    // we need to calculate the center of the pixel relative to the camera's coordinate system
+                    // and then transform this point to world coordinates using the camera's location and orientation
+
+                    // so we'll first act as if the camera is at the origin facing the +Z axis
+                    // with this assumption, it's easy to determine the top and left of the viewport
+
+
                     const pixelCenter = {
-                        x: viewport.left + (pixelWidth / 2) + (col * pixelWidth),
-                        y: viewport.top - (pixelHeight / 2) - (row * pixelHeight),
-                        z: viewport.topLeft.z // all pixels are somewhere on the viewport plane
+                        x: viewportLeft + (pixelWidth / 2) + (col * pixelWidth),
+                        y: viewportTop - (pixelHeight / 2) - (row * pixelHeight),
+                        z: viewportZ // all pixels are somewhere on the viewport plane
                     };
 
+                    // now we need to calculate where pixelCenter actually is given the camera's transform
+
+                    // worldPixelCenter = cameraTransformMatrix * pixelCenter
+
+                    const worldPixelCenter = transformPoint(view.camera.transform, pixelCenter);
+
+                    // now that we have the actual pixel center, we can build the ray
+
                     const ray = {
-                        origin: camera.center,
-                        direction: pixelCenter
+                        origin: view.camera.center,
+                        direction: worldPixelCenter
                     };
 
                     // now it's time to cast our ray and see what it hits
@@ -302,16 +369,16 @@
 
                     if (closest_object) {
                         // we can now color this pixel with the closest object's color
-                        writeCanvasPixel(col, row, closest_object.color);
+                        writeCanvasPixel(col, row, closest_object.color, canvasBuffer, canvasWidth);
                     } else {
                         // otherwise, let's color the pixel white
-                        writeCanvasPixel(col, row, white);
+                        writeCanvasPixel(col, row, white, canvasBuffer, canvasWidth);
                     }
                 }
             }
 
             // now that the canvas buffer has been updated, let's make the screen update
-            updateCanvas();
+            updateCanvas(canvasContext, canvasBuffer);
         }
 
 

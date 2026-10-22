@@ -169,40 +169,26 @@
                     a: 255
                 },
                 type: "sphere"
+            },
+            // this sphere will act as the floor, underneath the other spheres
+            {
+                name: "floor",
+                center: {
+                    x: 0,
+                    y: -101,
+                    z: 0
+                },
+                radius: 100,
+                color: {
+                    r: 255,
+                    g: 255,
+                    b: 0,
+                    a: 255
+                },
+                type: "sphere"
             }
         ];
 
-        // let's define the viewport with two points so that its plane is implied
-        // const viewport = {
-        //     topLeft: {
-        //         x: -1.0,
-        //         y: 1.0,
-        //         z: 1.0
-        //     },
-        //     bottomRight: {
-        //         x: 1.0,
-        //         y: -1.0,
-        //         z: 1.0
-        //     },
-        //     get top() {
-        //         return this.topLeft.y;
-        //     },
-        //     get bottom() {
-        //         return this.bottomRight.y;
-        //     },
-        //     get left() {
-        //         return this.topLeft.x;
-        //     },
-        //     get right() {
-        //         return this.bottomRight.x;
-        //     },
-        //     get height() {
-        //         return this.top - this.bottom;
-        //     },
-        //     get width() {
-        //         return this.right - this.left;
-        //     }
-        // };
 
         function dot(vec1, vec2) {
             return (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z);
@@ -285,7 +271,7 @@
             };
         }
 
-        const samplesPerPixel = 10;
+        const samplesPerPixel = 3;
 
 
         // let's now loop through each view and render them separately
@@ -388,13 +374,18 @@
 
                                 // if there are one or two intersection points
                                 if (discriminant >= 0) {
-                                    // we just need the smaller t value for now because the hit point is closer to the camera
-                                    const t = (-b - Math.sqrt(discriminant)) / (2 * a);
 
-                                    // with this t value, we now can compute exactly where our ray hits this sphere
-                                    // but we don't need to do that quite yet
+                                    // let's take both t values and then select the smaller positive value
+                                    // negative t values are points behind the camera
+                                    // the smaller positive value is a point in front of the camera, closer to it than the other positive value
 
-                                    if (t < min_t) {
+                                    const t1 = Math.max((-b - Math.sqrt(discriminant)) / (2 * a), 0);
+                                    const t2 = Math.max((-b + Math.sqrt(discriminant)) / (2 * a), 0);
+
+                                    const t = Math.min(t1, t2);
+
+                                    // ignore negative t values, those points are behind the camera
+                                    if (t < min_t && t > 0) {
                                         min_t = t;
                                         closest_object = object;
                                     }

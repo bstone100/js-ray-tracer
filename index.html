@@ -118,7 +118,8 @@
                     b: 0,
                     a: 255
                 },
-                type: "sphere"
+                type: "sphere",
+                material: "diffuse"
             },
             {
                 name: "s2",
@@ -134,7 +135,8 @@
                     b: 0,
                     a: 255
                 },
-                type: "sphere"
+                type: "sphere",
+                material: "diffuse"
             },
             {
                 name: "s3",
@@ -150,7 +152,8 @@
                     b: 255,
                     a: 255
                 },
-                type: "sphere"
+                type: "sphere",
+                material: "diffuse"
             },
             // this sphere will act as the floor, underneath the other spheres
             {
@@ -167,7 +170,8 @@
                     b: 0,
                     a: 255
                 },
-                type: "sphere"
+                type: "sphere",
+                material: "diffuse"
             }
         ];
 
@@ -244,8 +248,6 @@
                 z: dotVecArrays(transform[2], vec)
             };
         }
-
-        const samplesPerPixel = 10;
 
         function cameraToViewport(camera) {
             return {
@@ -341,6 +343,17 @@
             return unit(sub(point, sphere.center));
         }
 
+        function getSurfaceNormalAtPointOnObject(object, point) {
+            switch (object.type) {
+                case "sphere": {
+                    return getSurfaceNormalAtPointOnSphere(object, point);
+                }
+                default: {
+                    return null;
+                }
+            }
+        }
+
         function makeRandomUnitVector() {
             return unit({
                 x: Math.random() - 0.5,
@@ -364,9 +377,13 @@
                 bounceDirection = flipVector(bounceDirection);
             }
 
+            // return {
+            //     origin: hitPoint,
+            //     direction: unit(add(surfaceNormal, bounceDirection))
+            // };
             return {
                 origin: hitPoint,
-                direction: unit(add(surfaceNormal, bounceDirection))
+                direction: bounceDirection
             };
         }
 
@@ -381,20 +398,45 @@
             };
         }
 
+        // we need to make this function recursive and follow the ray to where it bounces
         function getColorAtRayHitPoint(ray) {
             const { min_t, closest_object } = shootRayAtObjects(ray, scene);
 
             if (closest_object) {
+
+                if (closest_object.material === "diffuse") {
+                    const hitPoint = getPointOnRay(ray, min_t);
+                    const surfaceNormal = getSurfaceNormalAtPointOnObject(closest_object, hitPoint);
+                    const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint);
+                    const bounceColor = getColorAtRayHitPoint(bounceRay);
+                    const factor = 0.7;
+                    return {
+                        r: bounceColor.r * factor,
+                        g: bounceColor.g * factor,
+                        b: bounceColor.b * factor,
+                        a: 255
+                    };
+                }
+
                 return closest_object.color;
             } else {
+                // this is the background color
+                // return {
+                //     r: 255 * 0.7,
+                //     g: 255 * 0.8,
+                //     b: 255,
+                //     a: 255
+                // };
                 return {
-                    r: 255 * 0.7,
-                    g: 255 * 0.8,
+                    r: 255,
+                    g: 255,
                     b: 255,
                     a: 255
                 };
             }
         }
+
+        const samplesPerPixel = 10;
 
         for (const view of views) {
             const canvasWidth = view.canvas.width;

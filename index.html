@@ -321,7 +321,7 @@
 
                         const t = Math.min(t1, t2);
 
-                        if (t < min_t && t > 0) {
+                        if (t < min_t && t > 0.001) {
                             min_t = t;
                             closest_object = object;
                         }
@@ -419,7 +419,7 @@
                     const surfaceNormal = getSurfaceNormalAtPointOnObject(closest_object, hitPoint);
                     const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint);
                     const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
-                    const factor = 0.7;
+                    const factor = 0.5;
                     return {
                         r: bounceColor.r * factor,
                         g: bounceColor.g * factor,
@@ -431,18 +431,18 @@
                 return closest_object.color;
             } else {
                 // this is the background color
-                // return {
-                //     r: 255 * 0.7,
-                //     g: 255 * 0.8,
-                //     b: 255,
-                //     a: 255
-                // };
                 return {
-                    r: 255,
-                    g: 255,
+                    r: 255 * 0.7,
+                    g: 255 * 0.8,
                     b: 255,
                     a: 255
                 };
+                // return {
+                //     r: 255,
+                //     g: 255,
+                //     b: 255,
+                //     a: 255
+                // };
             }
         }
 

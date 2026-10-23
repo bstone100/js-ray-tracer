@@ -15,8 +15,6 @@
     <p>This is my first attempt to write a ray tracer. It's inspired by the book <cite><a href="" target="_blank">Ray Tracing in One Weekend</a> by Peter Shirley</cite> and the book <cite><a href="" target="_blank">Computer Graphics from Scratch</a> by Gabriel Gambetta</cite>.
     <p>The first version is going to be just rendering some spheres in a <code>&lt;canvas&gt;</code> element.</p>
 
-    <!-- three canvases, each a different view into the same scene -->
-
     <h2>Front view</h2>
     <p>In this view the camera is in front of all the objects, staring down the +Z axis, so we're seeing the YX plane.</p>
     <canvas id="front-view" width="500" height="500"></canvas>
@@ -30,12 +28,6 @@
     <canvas id="top-view" width="500" height="500"></canvas>
 
     <script>
-        // let's implement the ray tracer here
-
-
-        // let's now refactor this code to support there being multiple views into the scene
-        // we will calculate the viewport dimensions and coordinates from the camera properties
-
         const views = [
             {
                 name: "front",
@@ -51,8 +43,6 @@
                         y: 0,
                         z: 1
                     },
-                    // I am going to temporarily hard code the transform matrix until I write better utilities
-                    // this transform is equivalent to the above center and direction values, where direction means the forward basis vector of the camera in world coordinates
                     transform: [
                         [1, 0, 0, 0],
                         [0, 1, 0, 0],
@@ -60,7 +50,7 @@
                         [0, 0, 0, 1]
                     ],
                     focalLength: 2.0,
-                    fieldOfView: 60.0 // degrees
+                    fieldOfView: 60.0
                 }
             },
             {
@@ -112,14 +102,6 @@
                 }
             }
         ];
-
-        // we're going to use a left-handed coordinate system, where the camera points toward the +Z axis
-
-
-        // let's now start describing our scene
-
-
-        // let's move our spheres closer to the origin on the Z axis so that they will be visible in all three views
 
         const scene = [
             {
@@ -175,7 +157,7 @@
                 name: "floor",
                 center: {
                     x: 0,
-                    y: -101,
+                    y: -100.5,
                     z: 0
                 },
                 radius: 100,
@@ -222,17 +204,9 @@
             return Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.y, 2) + Math.pow(vec.z, 2));
         }
 
-        function normalize(vec) {
+        function unit(vec) {
             return scale(1 / vecLength(vec), vec);
         }
-
-        const white = {
-            r: 255,
-            g: 255,
-            b: 255,
-            a: 255
-        };
-
 
         function writeCanvasPixel(x, y, color, canvasBuffer, canvasWidth) {
             const offset = 4 * (canvasWidth * y + x);
@@ -271,51 +245,165 @@
             };
         }
 
-        const samplesPerPixel = 3;
+        const samplesPerPixel = 10;
 
+        function cameraToViewport(camera) {
+            return {
+                width: 2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2),
+                height: 2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2)
+            };
+        }
 
-        // let's now loop through each view and render them separately
+        function canvasSpace2DToViewportSpace2D(posCanvas, canvas, viewport) {
+            return {
+                x: posCanvas.x * (viewport.width / canvas.width),
+                y: posCanvas.y * (viewport.height / canvas.height)
+            };
+        }
+
+        function viewportSpace2DToCameraSpace3D(posViewport, viewport, camera) {
+            return {
+                x: posViewport.x - viewport.width / 2,
+                y: -posViewport.y + viewport.height / 2,
+                z: camera.focalLength
+            };
+        }
+
+        function cameraSpace3DToWorldSpace3D(posCamera, camera) {
+            return transformPoint(camera.transform, posCamera);
+        }
+
+        function canvasSpaceToWorldSpace(posCanvas, canvas, viewport, camera) {
+            const posViewport = canvasSpace2DToViewportSpace2D(posCanvas, canvas, viewport);
+            const posCamera = viewportSpace2DToCameraSpace3D(posViewport, viewport, camera);
+            return cameraSpace3DToWorldSpace3D(posCamera, camera);
+        }
+
+        function canvasPixelCenter(posCanvas) {
+            return {
+                x: posCanvas.x + 0.5,
+                y: posCanvas.y + 0.5
+            }
+        }
+
+        function randomLocationInsideCanvasPixel(posCanvas) {
+            return {
+                x: posCanvas.x + Math.random(),
+                y: posCanvas.y + Math.random()
+            };
+        }
+
+        function canvasPixelCenterToWorldSpace(posCanvas, canvas, viewport, camera) {
+            return canvasSpaceToWorldSpace(canvasPixelCenter(posCanvas), canvas, viewport, camera);
+        }
+
+        function randomLocationInsideCanvasPixelToWorldSpace(posCanvas, canvas, viewport, camera) {
+            return canvasSpaceToWorldSpace(randomLocationInsideCanvasPixel(posCanvas), canvas, viewport, camera);
+        }
+
+        function shootRayAtObjects(ray, objects) {
+            let min_t = Infinity;
+            let closest_object = null;
+
+            for (const object of objects) {
+                if (object.type === "sphere") {
+                    const a = dot(ray.direction, ray.direction);
+                    const b = -2 * dot(ray.direction, sub(object.center, ray.origin));
+                    const c = dot(sub(object.center, ray.origin), sub(object.center, ray.origin)) - Math.pow(object.radius, 2);
+
+                    const discriminant = Math.pow(b, 2) - 4 * a * c;
+
+                    if (discriminant >= 0) {
+                        const t1 = Math.max((-b - Math.sqrt(discriminant)) / (2 * a), 0);
+                        const t2 = Math.max((-b + Math.sqrt(discriminant)) / (2 * a), 0);
+
+                        const t = Math.min(t1, t2);
+
+                        if (t < min_t && t > 0) {
+                            min_t = t;
+                            closest_object = object;
+                        }
+                    }
+                }
+            }
+
+            return {
+                min_t,
+                closest_object
+            };
+        }
+
+        function getPointOnRay(ray, t) {
+            return add(ray.origin, scale(t, ray.direction));
+        }
+
+        function getSurfaceNormalAtPointOnSphere(sphere, point) {
+            return unit(sub(point, sphere.center));
+        }
+
+        function makeRandomUnitVector() {
+            return unit({
+                x: Math.random() - 0.5,
+                y: Math.random() - 0.5,
+                z: Math.random() - 0.5
+            });
+        }
+
+        function flipVector(vec) {
+            return {
+                x: -vec.x,
+                y: -vec.y,
+                z: -vec.z
+            };
+        }
+
+        function makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint) {
+            let bounceDirection = makeRandomUnitVector();
+
+            if (dot(surfaceNormal, bounceDirection) < 0) {
+                bounceDirection = flipVector(bounceDirection);
+            }
+
+            return {
+                origin: hitPoint,
+                direction: unit(add(surfaceNormal, bounceDirection))
+            };
+        }
+
+        function surfaceNormalToColor(surfaceNormal) {
+            const normalized = unit(surfaceNormal);
+
+            return {
+                r: (normalized.x + 1) / 2 * 255,
+                g: (normalized.y + 1) / 2 * 255,
+                b: (normalized.z + 1) / 2 * 255,
+                a: 255
+            };
+        }
+
+        function getColorAtRayHitPoint(ray) {
+            const { min_t, closest_object } = shootRayAtObjects(ray, scene);
+
+            if (closest_object) {
+                return closest_object.color;
+            } else {
+                return {
+                    r: 255 * 0.7,
+                    g: 255 * 0.8,
+                    b: 255,
+                    a: 255
+                };
+            }
+        }
 
         for (const view of views) {
-            // get the canvas info
-
             const canvasWidth = view.canvas.width;
             const canvasHeight = view.canvas.height;
             const canvasContext = view.canvas.getContext("2d");
             const canvasBuffer = canvasContext.getImageData(0, 0, canvasWidth, canvasHeight);
 
-            // we need to calculate some information about the viewport before we can ray trace
-            // we need its width, height, top, left
-            // these can all be calculated from the camera properties
-
-            // viewport width can be calculated with width = 2 * focal length * tan(fov / 2)
-
-            const viewportWidth = 2 * view.camera.focalLength * Math.tan(degreesToRadians(view.camera.fieldOfView) / 2);
-            const viewportHeight = viewportWidth;
-            const viewportLeft = - viewportWidth / 2;
-            const viewportTop = viewportHeight / 2;
-
-            // let's begin setting up the ray tracer
-            // we will be casting one ray per pixel, from the camera center to the pixel center
-
-            const pixelWidth = viewportWidth / canvasWidth;
-            const pixelHeight = viewportHeight / canvasHeight;
-
-            // this is a loop over every pixel in the canvas, that's 500 * 500 iterations, 250,000
             for (let canvasY = 0; canvasY < canvasHeight; canvasY++) {
                 for (let canvasX = 0; canvasX < canvasWidth; canvasX++) {
-                    // determine the location in 3D of the center of this pixel
-
-
-                    // we need to calculate the center of the pixel relative to the camera's coordinate system
-                    // and then transform this point to world coordinates using the camera's location and orientation
-
-                    // so we'll first act as if the camera is at the origin facing the +Z axis
-                    // with this assumption, it's easy to determine the top and left of the viewport
-
-                    // we want to now get some antialiasing, and we're going to do that by casting multiple sample rays per pixel
-                    // we should pick n random locations within the pixel
-
                     const totalColor = {
                         r: 0,
                         g: 0,
@@ -323,120 +411,24 @@
                     };
 
                     for (let sample = 0; sample < samplesPerPixel; sample++) {
-                        // first calculate the pixel center relative to the camera
-                        // instead of taking the exact pixel center, we're taking a random location inside the pixel
 
-                        const randomCanvasX = canvasX + Math.random() - 0.5;
-                        const randomCanvasY = canvasY + Math.random() - 0.5;
-
-                        // this is relative to camera's coordinate space
-                        const sampleLocation = {
-                            x: viewportLeft + (pixelWidth / 2) + (randomCanvasX * pixelWidth),
-                            y: viewportTop - (pixelHeight / 2) - (randomCanvasY * pixelHeight),
-                            z: view.camera.focalLength
-                        };
-
-                        // calculate where the sample is in world space
-                        const worldSampleLocation = transformPoint(view.camera.transform, sampleLocation);
+                        const rayTarget = randomLocationInsideCanvasPixelToWorldSpace({x: canvasX, y: canvasY},
+                                                                                       view.canvas,
+                                                                                       cameraToViewport(view.camera),
+                                                                                       view.camera);
 
                         const ray = {
                             origin: view.camera.center,
-                            direction: worldSampleLocation
+                            direction: rayTarget
                         };
 
-                        // now it's time to cast our ray and see what it hits
-                        // we want to determine if the ray hits any objects, and if so, which object is the closest to the camera
-                        // then, we can paint this pixel with the color of that object
+                        const color = getColorAtRayHitPoint(ray);
 
-                        let min_t = Infinity; // the lowest t value
-                        let closest_object = null;
-
-                        // let's start by looping through our scene (which is a 1D array of objects now, but could be a tree of objects later)
-                        for (const object of scene) {
-                            // we are just going to handle spheres for now
-                            if (object.type === "sphere") {
-                                // we need to determine if there is a point along the ray which is also on the surface of the sphere
-                                // we can describe the sphere as |C - P| = r, meaning the length of the vector from any point P on the sphere surface to the sphere center C is equal to the sphere radius
-                                // we can describe the ray as P(t) = Q + td, where Q is the ray origin, d is the ray direction, t is a scalar
-                                // this means that any point P along the ray has a value t such that Q + td = P
-
-                                // we are looking for a point P that satisfies both the sphere surface equation and the ray equation
-                                // this means we can insert the ray equation into the sphere surface equation like this: |C - (Q + td)| = r
-                                // now, we just need to solve this equation for t, meaning we need to determine if there is a value of t that makes the equation true
-
-                                // when you work through the linear algebra, you find that this equation is quadratic and can be solved with the quadratic formula, which I'm about to do:
-
-                                const a = dot(ray.direction, ray.direction);
-                                const b = -2 * dot(ray.direction, sub(object.center, ray.origin));
-                                const c = dot(sub(object.center, ray.origin), sub(object.center, ray.origin)) - Math.pow(object.radius, 2);
-
-                                const discriminant = Math.pow(b, 2) - 4 * a * c;
-
-                                // if there are one or two intersection points
-                                if (discriminant >= 0) {
-
-                                    // let's take both t values and then select the smaller positive value
-                                    // negative t values are points behind the camera
-                                    // the smaller positive value is a point in front of the camera, closer to it than the other positive value
-
-                                    const t1 = Math.max((-b - Math.sqrt(discriminant)) / (2 * a), 0);
-                                    const t2 = Math.max((-b + Math.sqrt(discriminant)) / (2 * a), 0);
-
-                                    const t = Math.min(t1, t2);
-
-                                    // ignore negative t values, those points are behind the camera
-                                    if (t < min_t && t > 0) {
-                                        min_t = t;
-                                        closest_object = object;
-                                    }
-                                }
-                            }
-                        }
-
-                        // now we know if the ray hit any objects, and if so which object is the closest to the camera
-
-                        if (closest_object) {
-                            // we can now color this pixel with the closest object's color
-
-
-                            // let's shade our sphere using the surface normal at our hit point
-                            // surface normal is vector P - C, where P is a point on the surface and C is the center
-
-
-                            // we need to calculate P using t
-                            // P(t) = Q + td, where Q is ray origin, d is ray direction
-
-                            const hitPoint = add(ray.origin, scale(min_t, ray.direction));
-
-                            const surfaceNormal = sub(hitPoint, closest_object.center);
-
-                            // the trick for shading a pixel from a surface normal is to map the surface normal coordinates to r g b
-                            // first normalize the vector, then map values from [-1, 1] to [0, 255]
-
-                            const normalized = normalize(surfaceNormal);
-
-                            const color = {
-                                r: (normalized.x + 1) / 2 * 255,
-                                g: (normalized.y + 1) / 2 * 255,
-                                b: (normalized.z + 1) / 2 * 255
-                            };
-
-                            totalColor.r += color.r;
-                            totalColor.g += color.g;
-                            totalColor.b += color.b;
-
-                            // writeCanvasPixel(col, row, color, canvasBuffer, canvasWidth);
-                        } else {
-                            // otherwise, let's color the pixel white
-                            // writeCanvasPixel(col, row, white, canvasBuffer, canvasWidth);
-
-                            totalColor.r += white.r;
-                            totalColor.g += white.g;
-                            totalColor.b += white.b;
-                        }
+                        totalColor.r += color.r;
+                        totalColor.g += color.g;
+                        totalColor.b += color.b;
                     }
 
-                    // now get the average color
                     const averageColor = {
                         r: totalColor.r / samplesPerPixel,
                         g: totalColor.g / samplesPerPixel,
@@ -445,33 +437,13 @@
                     };
 
                     writeCanvasPixel(canvasX, canvasY, averageColor, canvasBuffer, canvasWidth);
-
                 }
             }
 
             // now that the canvas buffer has been updated, let's make the screen update
             updateCanvas(canvasContext, canvasBuffer);
         }
-
-
-
-
-
-        // now... everything should work...
-        // hooray! it works!
-
-        // I want to now show the same scene from three different views
-        // the first view is the current view, where you are looking at the YX plane, this is the default camera view, we can say that in this view you are looking directly at the objects, you are looking straight down the Z axis, you cannot perceive any depth in the Z axis, yet
-
-        // the second view is you looking at the YZ plane, which we can say is a POV from the right of the objects, so you are looking straight down the X axis, you cannot perceive any depth in the X axis, yet
-
-        // the third view is you looking at the ZX plane, which we can is a top-down view, you're looking down at the objects from the ceiling, you're looking straight down the Y axis, you cannot perceive any depth in the Y axis, yet
-
-
-
     </script>
-
-
 </body>
 </html>
 

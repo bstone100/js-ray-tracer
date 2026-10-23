@@ -399,7 +399,17 @@
         }
 
         // we need to make this function recursive and follow the ray to where it bounces
-        function getColorAtRayHitPoint(ray) {
+        function getColorAtRayHitPoint(ray, maxBounces, bounce) {
+
+            if (bounce === maxBounces) {
+                return {
+                    r: 0,
+                    g: 0,
+                    b: 0,
+                    a: 255
+                };
+            }
+
             const { min_t, closest_object } = shootRayAtObjects(ray, scene);
 
             if (closest_object) {
@@ -408,7 +418,7 @@
                     const hitPoint = getPointOnRay(ray, min_t);
                     const surfaceNormal = getSurfaceNormalAtPointOnObject(closest_object, hitPoint);
                     const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint);
-                    const bounceColor = getColorAtRayHitPoint(bounceRay);
+                    const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
                     const factor = 0.7;
                     return {
                         r: bounceColor.r * factor,
@@ -437,6 +447,7 @@
         }
 
         const samplesPerPixel = 10;
+        const maxBounces = 50;
 
         for (const view of views) {
             const canvasWidth = view.canvas.width;
@@ -464,7 +475,7 @@
                             direction: rayTarget
                         };
 
-                        const color = getColorAtRayHitPoint(ray);
+                        const color = getColorAtRayHitPoint(ray, maxBounces, 0);
 
                         totalColor.r += color.r;
                         totalColor.g += color.g;

@@ -373,18 +373,18 @@
         function makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint) {
             let bounceDirection = makeRandomUnitVector();
 
-            if (dot(surfaceNormal, bounceDirection) < 0) {
-                bounceDirection = flipVector(bounceDirection);
-            }
+            // if (dot(surfaceNormal, bounceDirection) < 0) {
+            //     bounceDirection = flipVector(bounceDirection);
+            // }
 
-            // return {
-            //     origin: hitPoint,
-            //     direction: unit(add(surfaceNormal, bounceDirection))
-            // };
             return {
                 origin: hitPoint,
-                direction: bounceDirection
+                direction: unit(add(surfaceNormal, bounceDirection))
             };
+            // return {
+            //     origin: hitPoint,
+            //     direction: bounceDirection
+            // };
         }
 
         function surfaceNormalToColor(surfaceNormal) {

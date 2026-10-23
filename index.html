@@ -489,6 +489,11 @@
                         a: 255
                     };
 
+                    // gamma correction
+                    averageColor.r = Math.sqrt(averageColor.r / 255) * 255;
+                    averageColor.g = Math.sqrt(averageColor.g / 255) * 255;
+                    averageColor.b = Math.sqrt(averageColor.b / 255) * 255;
+
                     writeCanvasPixel(canvasX, canvasY, averageColor, canvasBuffer, canvasWidth);
                 }
             }

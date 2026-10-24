@@ -155,6 +155,44 @@
                 type: "sphere",
                 material: "diffuse"
             },
+            {
+                name: "box1",
+                center: {
+                    x: 0.5,
+                    y: 0.5,
+                    z: 1
+                },
+                width: 0.5,
+                height: 0.5,
+                depth: 0.5,
+                color: {
+                    r: 0,
+                    g: 255,
+                    b: 255,
+                    a: 255
+                },
+                type: "box",
+                material: "diffuse"
+            },
+            {
+                name: "box2",
+                center: {
+                    x: -0.5,
+                    y: -0.5,
+                    z: 0
+                },
+                width: 0.6,
+                height: 0.2,
+                depth: 0.2,
+                color: {
+                    r: 255,
+                    g: 0,
+                    b: 255,
+                    a: 255
+                },
+                type: "box",
+                material: "diffuse"
+            },
             // this sphere will act as the floor, underneath the other spheres
             {
                 name: "floor",
@@ -303,36 +341,144 @@
             return canvasSpaceToWorldSpace(randomLocationInsideCanvasPixel(posCanvas), canvas, viewport, camera);
         }
 
-        function shootRayAtObjects(ray, objects) {
+        // return a hit record object
+        function shootRayAtSphere(ray, sphere) {
+            const a = dot(ray.direction, ray.direction);
+            const b = -2 * dot(ray.direction, sub(sphere.center, ray.origin));
+            const c = dot(sub(sphere.center, ray.origin), sub(sphere.center, ray.origin)) - Math.pow(sphere.radius, 2);
+
+            const discriminant = Math.pow(b, 2) - 4 * a * c;
+
+            if (discriminant >= 0) {
+                const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+
+                if (t1 < 0 && t2 < 0) return {};
+                if (t1 >= 0 && t2 < 0) return {t: t1};
+                if (t1 < 0 && t2 >= 0) return {t: t2};
+                return {t: Math.min(t1, t2)};
+            }
+            return {};
+        }
+
+        // return a hit record object
+        function shootRayAtBox(ray, box) {
+            // let's work through this
+            // let's assume for now that the box has no rotation, so it is axis aligned
+            // we're going to be finding between 2 and 6 t values
+            // 6 t values is the normal case
+            // 2 t values means the ray is parallel to 4 of the box planes (perpendicular to 2 of them)
+
+            const boxMin = {
+                x: box.center.x - box.width / 2,
+                y: box.center.y - box.height / 2,
+                z: box.center.z - box.depth / 2
+            };
+
+            const boxMax = {
+                x: box.center.x + box.width / 2,
+                y: box.center.y + box.height / 2,
+                z: box.center.z + box.height / 2
+            };
+
+            // ray is P(t) = Q + td
+            // P(t).x = Q.x + t*d.x
+            // (P(t).x - Q.x) / d.x = t
+            // P(t).x is boxMin.x and boxMax.x
+
+            // the box forms two planes with a known x, X = boxMin.x and X = boxMax.x
+            // we can solve for t on a ray, just by knowing a single x, y, or z value
+
+            const slabs = [
+                {
+                    plane: "left",
+                    t: (boxMin.x - ray.origin.x) / ray.direction.x
+                },
+                {
+                    plane: "right",
+                    t: (boxMax.x - ray.origin.x) / ray.direction.x
+                },
+                {
+                    plane: "bottom",
+                    t: (boxMin.y - ray.origin.y) / ray.direction.y
+                },
+                {
+                    plane: "top",
+                    t: (boxMax.y - ray.origin.y) / ray.direction.y
+                },
+                {
+                    plane: "backward",
+                    t: (boxMin.z - ray.origin.z) / ray.direction.z
+                },
+                {
+                    plane: "forward",
+                    t: (boxMax.z - ray.origin.z) / ray.direction.z
+                }
+            ];
+
+
+            // a plane hit point is only actually a box hit point if x, y, and z all are within the box range
+            // in most cases there should be two hit points, with one being closer to the ray origin
+
+            // let's find the valid hit points
+
             let min_t = Infinity;
-            let closest_object = null;
+            let hit_record = {};
 
-            for (const object of objects) {
-                if (object.type === "sphere") {
-                    const a = dot(ray.direction, ray.direction);
-                    const b = -2 * dot(ray.direction, sub(object.center, ray.origin));
-                    const c = dot(sub(object.center, ray.origin), sub(object.center, ray.origin)) - Math.pow(object.radius, 2);
+            for (const slab of slabs) {
+                // t has to be greater than 0
+                // point.x, point.y, point.z all have to be within interval formed by boxMin, boxMax
 
-                    const discriminant = Math.pow(b, 2) - 4 * a * c;
+                if (slab.t >= 0) {
+                    const p = getPointOnRay(ray, slab.t);
 
-                    if (discriminant >= 0) {
-                        const t1 = Math.max((-b - Math.sqrt(discriminant)) / (2 * a), 0);
-                        const t2 = Math.max((-b + Math.sqrt(discriminant)) / (2 * a), 0);
-
-                        const t = Math.min(t1, t2);
-
-                        if (t < min_t && t > 0.001) {
-                            min_t = t;
-                            closest_object = object;
+                    if (p.x >= boxMin.x &&
+                        p.x <= boxMax.x &&
+                        p.y >= boxMin.y &&
+                        p.y <= boxMax.y &&
+                        p.z >= boxMin.z &&
+                        p.z <= boxMax.z)
+                    {
+                        if (slab.t < min_t) {
+                            min_t = slab.t;
+                            hit_record = slab;
+                            hit_record.point = p;
                         }
                     }
                 }
             }
 
-            return {
-                min_t,
-                closest_object
-            };
+
+            return hit_record;
+        }
+
+        function shootRayAtObject(ray, object) {
+            switch (object.type) {
+                case "sphere": return shootRayAtSphere(ray, object);
+                case "box": return shootRayAtBox(ray, object);
+                default: return {};
+            }
+        }
+
+        function shootRayAtObjects(ray, objects) {
+            let min_t = Infinity;
+            let closest_hit_record = {};
+
+            for (const object of objects) {
+                const hit_record = shootRayAtObject(ray, object);
+
+                if (hit_record.t < min_t) {
+                    min_t = hit_record.t;
+                    closest_hit_record = hit_record;
+                    closest_hit_record.object = object;
+                }
+            }
+
+            if (closest_hit_record.object && !closest_hit_record.point) {
+                closest_hit_record.point = getPointOnRay(ray, closest_hit_record.t);
+            }
+
+            return closest_hit_record;
         }
 
         function getPointOnRay(ray, t) {
@@ -343,14 +489,23 @@
             return unit(sub(point, sphere.center));
         }
 
-        function getSurfaceNormalAtPointOnObject(object, point) {
-            switch (object.type) {
-                case "sphere": {
-                    return getSurfaceNormalAtPointOnSphere(object, point);
-                }
-                default: {
-                    return null;
-                }
+        // we only need to know the side of the box to determine the surface normal
+        function getSurfaceNormalAtPointOnBox(plane) {
+            switch (plane) {
+                case "left": return {x: -1, y: 0, z: 0};
+                case "right": return {x: 1, y: 0, z: 0};
+                case "bottom": return {x: 0, y: -1, z: 0};
+                case "top": return {x: 0, y: 1, z: 0};
+                case "backward": return {x: 0, y: 0, z: -1};
+                case "forward": return {x: 0, y: 0, z: 1};
+            }
+        }
+
+        function getSurfaceNormalAtPointOnObject(hit_record) {
+            switch (hit_record.object.type) {
+                case "sphere": return getSurfaceNormalAtPointOnSphere(hit_record.object, hit_record.point);
+                case "box": return getSurfaceNormalAtPointOnBox(hit_record.plane);
+                default: return null;
             }
         }
 
@@ -410,25 +565,33 @@
                 };
             }
 
-            const { min_t, closest_object } = shootRayAtObjects(ray, scene);
+            const hit_record = shootRayAtObjects(ray, scene);
 
-            if (closest_object) {
+            if (hit_record.object) {
 
-                if (closest_object.material === "diffuse") {
-                    const hitPoint = getPointOnRay(ray, min_t);
-                    const surfaceNormal = getSurfaceNormalAtPointOnObject(closest_object, hitPoint);
-                    const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint);
-                    const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
-                    const factor = 0.5;
-                    return {
-                        r: bounceColor.r * factor,
-                        g: bounceColor.g * factor,
-                        b: bounceColor.b * factor,
-                        a: 255
-                    };
+                if (hit_record.object.name === "box2" && hit_record.plane === "right") debugger;
+
+                if (hit_record.object.name === "box2") {
+                    console.log(hit_record);
                 }
 
-                return closest_object.color;
+                if (hit_record.object.material === "diffuse") {
+                    const surfaceNormal = getSurfaceNormalAtPointOnObject(hit_record);
+
+                    return surfaceNormalToColor(surfaceNormal);
+
+                    // const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hit_record.point);
+                    // const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
+                    // const factor = 0.7;
+                    // return {
+                    //     r: bounceColor.r * factor,
+                    //     g: bounceColor.g * factor,
+                    //     b: bounceColor.b * factor,
+                    //     a: 255
+                    // };
+                }
+
+                return hit_record.object.color;
             } else {
                 // this is the background color
                 return {
@@ -446,10 +609,12 @@
             }
         }
 
-        const samplesPerPixel = 10;
-        const maxBounces = 50;
+        const samplesPerPixel = 5;
+        const maxBounces = 5;
 
         for (const view of views) {
+            if (view.name !== "right") continue;
+
             const canvasWidth = view.canvas.width;
             const canvasHeight = view.canvas.height;
             const canvasContext = view.canvas.getContext("2d");
@@ -465,6 +630,8 @@
 
                     for (let sample = 0; sample < samplesPerPixel; sample++) {
 
+                        // if (sample === 0 && canvas.x
+
                         const rayTarget = randomLocationInsideCanvasPixelToWorldSpace({x: canvasX, y: canvasY},
                                                                                        view.canvas,
                                                                                        cameraToViewport(view.camera),
@@ -476,6 +643,10 @@
                         };
 
                         const color = getColorAtRayHitPoint(ray, maxBounces, 0);
+
+                        // if (sample === 0 && canvasX === 125 && canvasY === 350 && color.r === 159 && color.g === 252 && color.b === 134) {
+                        //     console.log("found");
+                        // }
 
                         totalColor.r += color.r;
                         totalColor.g += color.g;
@@ -490,9 +661,9 @@
                     };
 
                     // gamma correction
-                    averageColor.r = Math.sqrt(averageColor.r / 255) * 255;
-                    averageColor.g = Math.sqrt(averageColor.g / 255) * 255;
-                    averageColor.b = Math.sqrt(averageColor.b / 255) * 255;
+                    // averageColor.r = Math.sqrt(averageColor.r / 255) * 255;
+                    // averageColor.g = Math.sqrt(averageColor.g / 255) * 255;
+                    // averageColor.b = Math.sqrt(averageColor.b / 255) * 255;
 
                     writeCanvasPixel(canvasX, canvasY, averageColor, canvasBuffer, canvasWidth);
                 }

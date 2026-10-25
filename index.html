@@ -181,9 +181,9 @@
                     y: -0.5,
                     z: 0
                 },
-                width: 0.6,
+                width: 0.5,
                 height: 0.2,
-                depth: 0.2,
+                depth: 1.5,
                 color: {
                     r: 255,
                     g: 0,
@@ -429,17 +429,38 @@
                 // t has to be greater than 0
                 // point.x, point.y, point.z all have to be within interval formed by boxMin, boxMax
 
-                if (slab.t >= 0) {
+                if (slab.t >= 0.001 && slab.t < min_t) {
                     const p = getPointOnRay(ray, slab.t);
 
-                    if (p.x >= boxMin.x &&
-                        p.x <= boxMax.x &&
-                        p.y >= boxMin.y &&
-                        p.y <= boxMax.y &&
-                        p.z >= boxMin.z &&
-                        p.z <= boxMax.z)
-                    {
-                        if (slab.t < min_t) {
+                    // let's not redundantly compare the coordinate we already know since the comparison could fail due to floating point error
+
+                    if (slab.plane === "left" || slab.plane === "right") {
+                        // just compare y and z
+                        if (p.y >= boxMin.y &&
+                            p.y <= boxMax.y &&
+                            p.z >= boxMin.z &&
+                            p.z <= boxMax.z)
+                        {
+                            min_t = slab.t;
+                            hit_record = slab;
+                            hit_record.point = p;
+                        }
+                    } else if (slab.plane === "top" || slab.plane === "bottom") {
+                        if (p.x >= boxMin.x &&
+                            p.x <= boxMax.x &&
+                            p.z >= boxMin.z &&
+                            p.z <= boxMax.z)
+                        {
+                            min_t = slab.t;
+                            hit_record = slab;
+                            hit_record.point = p;
+                        }
+                    } else if (slab.plane === "forward" || slab.plane === "backward") {
+                        if (p.x >= boxMin.x &&
+                            p.x <= boxMax.x &&
+                            p.y >= boxMin.y &&
+                            p.y <= boxMax.y)
+                        {
                             min_t = slab.t;
                             hit_record = slab;
                             hit_record.point = p;
@@ -447,7 +468,6 @@
                     }
                 }
             }
-
 
             return hit_record;
         }
@@ -569,26 +589,20 @@
 
             if (hit_record.object) {
 
-                if (hit_record.object.name === "box2" && hit_record.plane === "right") debugger;
-
-                if (hit_record.object.name === "box2") {
-                    console.log(hit_record);
-                }
-
                 if (hit_record.object.material === "diffuse") {
                     const surfaceNormal = getSurfaceNormalAtPointOnObject(hit_record);
 
-                    return surfaceNormalToColor(surfaceNormal);
+                    // return surfaceNormalToColor(surfaceNormal);
 
-                    // const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hit_record.point);
-                    // const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
-                    // const factor = 0.7;
-                    // return {
-                    //     r: bounceColor.r * factor,
-                    //     g: bounceColor.g * factor,
-                    //     b: bounceColor.b * factor,
-                    //     a: 255
-                    // };
+                    const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hit_record.point);
+                    const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
+                    const factor = 0.7;
+                    return {
+                        r: bounceColor.r * factor,
+                        g: bounceColor.g * factor,
+                        b: bounceColor.b * factor,
+                        a: 255
+                    };
                 }
 
                 return hit_record.object.color;
@@ -613,7 +627,7 @@
         const maxBounces = 5;
 
         for (const view of views) {
-            if (view.name !== "right") continue;
+            // if (view.name !== "right") continue;
 
             const canvasWidth = view.canvas.width;
             const canvasHeight = view.canvas.height;
@@ -629,9 +643,6 @@
                     };
 
                     for (let sample = 0; sample < samplesPerPixel; sample++) {
-
-                        // if (sample === 0 && canvas.x
-
                         const rayTarget = randomLocationInsideCanvasPixelToWorldSpace({x: canvasX, y: canvasY},
                                                                                        view.canvas,
                                                                                        cameraToViewport(view.camera),
@@ -643,10 +654,6 @@
                         };
 
                         const color = getColorAtRayHitPoint(ray, maxBounces, 0);
-
-                        // if (sample === 0 && canvasX === 125 && canvasY === 350 && color.r === 159 && color.g === 252 && color.b === 134) {
-                        //     console.log("found");
-                        // }
 
                         totalColor.r += color.r;
                         totalColor.g += color.g;

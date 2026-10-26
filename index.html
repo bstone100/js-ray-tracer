@@ -193,6 +193,42 @@
                 type: "box",
                 material: "diffuse"
             },
+            {
+                name: "cylinder1",
+                center: {
+                    x: 0.5,
+                    y: -0.5,
+                    z: 0
+                },
+                radius: 0.25,
+                height: 2,
+                color: {
+                    r: 150,
+                    g: 150,
+                    b: 75,
+                    a: 255
+                },
+                type: "cylinder",
+                material: "diffuse"
+            },
+            {
+                name: "cylinder2",
+                center: {
+                    x: -0.5,
+                    y: -0.5,
+                    z: 0.75
+                },
+                radius: 0.5,
+                height: 0.25,
+                color: {
+                    r: 75,
+                    g: 150,
+                    b: 150,
+                    a: 255
+                },
+                type: "cylinder",
+                material: "diffuse"
+            },
             // this sphere will act as the floor, underneath the other spheres
             {
                 name: "floor",
@@ -429,7 +465,7 @@
                 // t has to be greater than 0
                 // point.x, point.y, point.z all have to be within interval formed by boxMin, boxMax
 
-                if (slab.t >= 0.001 && slab.t < min_t) {
+                if (slab.t >= 0 && slab.t < min_t) {
                     const p = getPointOnRay(ray, slab.t);
 
                     // let's not redundantly compare the coordinate we already know since the comparison could fail due to floating point error
@@ -472,10 +508,125 @@
             return hit_record;
         }
 
+        function shootRayAtCylinder(ray, cylinder) {
+            // there are three components we need to test: the main side surface of the cylinder, and the top and bottom
+            // all of this math is easier to do if we assume the cylinder is aligned with the Y axis
+            // we can achieve this by just shifting the ray origin by the reverse of the cylinder's translation
+            // the t values will be the same
+
+            // let's start with the top and bottom of the cylinder as they're easier
+
+            // top
+            // find intersection of ray with entire upper plane where we know y = center y + height / 2
+
+            const upperPlaneT = (cylinder.center.y + cylinder.height / 2 - ray.origin.y) / ray.direction.y;
+            const upperPlanePoint = getPointOnRay(ray, upperPlaneT);
+
+            // check if point is within the top circle
+            const upperPointValid = upperPlaneT >= 0 &&
+                                    Math.pow(upperPlanePoint.x - cylinder.center.x, 2) +
+                                    Math.pow(upperPlanePoint.z - cylinder.center.z, 2)
+                                    <= Math.pow(cylinder.radius, 2);
+
+            // now let's do the bottom surface
+
+            const lowerPlaneT = (cylinder.center.y - cylinder.height / 2 - ray.origin.y) / ray.direction.y;
+            const lowerPlanePoint = getPointOnRay(ray, lowerPlaneT);
+
+            const lowerPointValid = lowerPlaneT >= 0 &&
+                                    Math.pow(lowerPlanePoint.x - cylinder.center.x, 2) +
+                                    Math.pow(lowerPlanePoint.z - cylinder.center.z, 2)
+                                    <= Math.pow(cylinder.radius, 2);
+
+            // now time to do the main surface
+            // we need to shift the ray origin if we want to treat the cylinder as if it was aligned with the Y axis
+
+            const shiftedOrigin = sub(ray.origin, cylinder.center);
+
+            const a = Math.pow(ray.direction.x, 2) + Math.pow(ray.direction.z, 2);
+            const b = 2 * (shiftedOrigin.x * ray.direction.x + shiftedOrigin.z * ray.direction.z);
+            const c = Math.pow(shiftedOrigin.x, 2) + Math.pow(shiftedOrigin.z, 2) - Math.pow(cylinder.radius, 2);
+
+            const discriminant = b * b - 4 * a * c;
+
+            let mainSurfaceT1 = null;
+            let mainSurfaceT2 = null;
+
+            if (discriminant >= 0) {
+                mainSurfaceT1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                mainSurfaceT2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+            }
+
+            // now we need to find out if these two intersection points are within the Y range
+
+            let mainPoint1Valid = false;
+            let mainPoint2Valid = false;
+
+            let mainPoint1 = null;
+            let mainPoint2 = null;
+
+            if (mainSurfaceT1) {
+                mainPoint1 = getPointOnRay(ray, mainSurfaceT1);
+                mainPoint1Valid = mainSurfaceT1 >= 0 &&
+                                  mainPoint1.y >= cylinder.center.y - cylinder.height / 2 &&
+                                  mainPoint1.y <= cylinder.center.y + cylinder.height / 2;
+            }
+
+            if (mainSurfaceT2) {
+                mainPoint2 = getPointOnRay(ray, mainSurfaceT2);
+                mainPoint2Valid = mainSurfaceT2 >= 0 &&
+                                  mainPoint2.y >= cylinder.center.y - cylinder.height / 2 &&
+                                  mainPoint2.y <= cylinder.center.y + cylinder.height / 2;
+            }
+
+            // now we have up to 4 t values, and we know if each is valid or not, we need the smallest one
+
+            const options = [
+                {
+                    surface: "top",
+                    t: upperPlaneT,
+                    point: upperPlanePoint,
+                    valid: upperPointValid
+                },
+                {
+                    surface: "bottom",
+                    t: lowerPlaneT,
+                    point: lowerPlanePoint,
+                    valid: lowerPointValid
+                },
+                {
+                    surface: "main",
+                    t: mainSurfaceT1,
+                    point: mainPoint1,
+                    valid: mainPoint1Valid
+                },
+                {
+                    surface: "main",
+                    t: mainSurfaceT2,
+                    point: mainPoint2,
+                    valid: mainPoint2Valid
+                }
+            ];
+
+            let min_t = Infinity;
+            let hit_record = {};
+
+
+            for (const option of options) {
+                if (option.valid && option.t < min_t) {
+                    min_t = option.t;
+                    hit_record = option;
+                }
+            }
+
+            return hit_record;
+        }
+
         function shootRayAtObject(ray, object) {
             switch (object.type) {
                 case "sphere": return shootRayAtSphere(ray, object);
                 case "box": return shootRayAtBox(ray, object);
+                case "cylinder": return shootRayAtCylinder(ray, object);
                 default: return {};
             }
         }
@@ -487,7 +638,7 @@
             for (const object of objects) {
                 const hit_record = shootRayAtObject(ray, object);
 
-                if (hit_record.t < min_t) {
+                if (hit_record.t < min_t && hit_record.t >= 0.001) {
                     min_t = hit_record.t;
                     closest_hit_record = hit_record;
                     closest_hit_record.object = object;
@@ -521,10 +672,19 @@
             }
         }
 
+        function getSurfaceNormalAtPointOnCylinder(cylinder, point, surface) {
+            switch (surface) {
+                case "top": return {x: 0, y: 1, z: 0};
+                case "bottom": return {x: 0, y: -1, z: 0};
+                case "main": return unit({...sub(point, cylinder.center), y: 0});
+            }
+        }
+
         function getSurfaceNormalAtPointOnObject(hit_record) {
             switch (hit_record.object.type) {
                 case "sphere": return getSurfaceNormalAtPointOnSphere(hit_record.object, hit_record.point);
                 case "box": return getSurfaceNormalAtPointOnBox(hit_record.plane);
+                case "cylinder": return getSurfaceNormalAtPointOnCylinder(hit_record.object, hit_record.point, hit_record.surface);
                 default: return null;
             }
         }
@@ -623,8 +783,8 @@
             }
         }
 
-        const samplesPerPixel = 5;
-        const maxBounces = 5;
+        const samplesPerPixel = 10;
+        const maxBounces = 10;
 
         for (const view of views) {
             // if (view.name !== "right") continue;

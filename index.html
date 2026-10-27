@@ -622,11 +622,103 @@
             return hit_record;
         }
 
+        function shootRayAtCone(ray, cone) {
+            // a cone has two surfaces, the bottom and the main surface
+
+            // let's do the main surface first, it's another quadratic but even more confusing this time since the radius of the cone varies by your vertical position on the cone
+
+            // the following assumes the center of the cone is in the middle of the cone, and that this center is at the world origin
+
+            // once we add the ability to rotate a cone, I think we're going to need to apply the inverse cone transform to both the ray origin and ray direction
+            const shiftedOrigin = sub(ray.origin, cone.center);
+
+            // these constants are just for convenience
+            const k1 = Math.pow(cone.radius, 2) / Math.pow(cone.height, 2);
+            const k2 = cone.height - shiftedOrigin.y - cone.height / 2;
+
+            const a = Math.pow(ray.direction.x, 2) + Math.pow(ray.direction.z, 2) - Math.pow(ray.direction.y, 2) * k1;
+            const b = 2 * (shiftedOrigin.x * ray.direction.x + shiftedOrigin.z * ray.direction.z + ray.direction.y * k2 * k1);
+            const c = Math.pow(shiftedOrigin.x, 2) + Math.pow(shiftedOrigin.z, 2) - k1 * Math.pow(k2, 2);
+
+            const discriminant = b * b - 4 * a * c;
+
+            let mainT1 = null;
+            let mainT2 = null;
+
+            let mainPoint1 = null;
+            let mainPoint2 = null;
+
+            let main1Valid = false;
+            let main2Valid = false;
+
+            if (discriminant >= 0) {
+                mainT1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                mainT2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+
+                mainPoint1 = getPointOnRay(ray, mainT1);
+                mainPoint2 = getPointOnRay(ray, mainT2);
+
+                // check that y is within range
+                main1Valid = mainT1 >= 0 &&
+                             mainPoint1.y >= cone.center - cone.height / 2 &&
+                             mainPoint1.y <= cone.center + cone.height / 2;
+
+                main2Valid = mainT1 >= 0 &&
+                             mainPoint2.y >= cone.center - cone.height / 2 &&
+                             mainPoint2.y <= cone.center + cone.height / 2;
+            }
+
+            // now it's time to check the bottom surface of the cone
+            // we're going to find t for the full bottom plane, y = cone.center - cone.height / 2
+
+            const bottomT = (cone.center.y - cone.height / 2 - ray.origin.y) / ray.direction.y;
+            const bottomPoint = getPointOnRay(ray, bottomT);
+
+            const bottomValid = bottomT >= 0 &&
+                                Math.pow(bottomPoint.x - cone.center.x, 2) +
+                                Math.pow(bottomPoint.z - cone.center.z, 2)
+                                <= Math.pow(cone.radius, 2);
+
+            const options = [
+                {
+                    surface: "main",
+                    t: mainT1,
+                    point: mainPoint1,
+                    valid: main1Valid
+                },
+                {
+                    surface: "main",
+                    t: mainT2,
+                    point: mainPoint2,
+                    valid: main2Valid
+                },
+                {
+                    surface: "bottom",
+                    t: bottomT,
+                    point: bottomPoint,
+                    valid: bottomValid
+                }
+            ];
+
+            let min_t = Infinity;
+            let hit_record = {};
+
+            for (const option of options) {
+                if (option.valid && option.t < min_t) {
+                    min_t = option.t;
+                    hit_record = option;
+                }
+            }
+
+            return hit_record;
+        }
+
         function shootRayAtObject(ray, object) {
             switch (object.type) {
                 case "sphere": return shootRayAtSphere(ray, object);
                 case "box": return shootRayAtBox(ray, object);
                 case "cylinder": return shootRayAtCylinder(ray, object);
+                case "cone": return shootRayAtCone(ray, object);
                 default: return {};
             }
         }
@@ -638,7 +730,7 @@
             for (const object of objects) {
                 const hit_record = shootRayAtObject(ray, object);
 
-                if (hit_record.t < min_t && hit_record.t >= 0.001) {
+                if (hit_record.t && hit_record.t < min_t && hit_record.t >= 0.001) {
                     min_t = hit_record.t;
                     closest_hit_record = hit_record;
                     closest_hit_record.object = object;
@@ -680,11 +772,19 @@
             }
         }
 
+        function getSurfaceNormalAtPointOnCone(cone, point, surface) {
+            switch (surface) {
+                case "bottom": return {x: 0, y: -1, z: 0};
+                // case "main":
+            }
+        }
+
         function getSurfaceNormalAtPointOnObject(hit_record) {
             switch (hit_record.object.type) {
                 case "sphere": return getSurfaceNormalAtPointOnSphere(hit_record.object, hit_record.point);
                 case "box": return getSurfaceNormalAtPointOnBox(hit_record.plane);
                 case "cylinder": return getSurfaceNormalAtPointOnCylinder(hit_record.object, hit_record.point, hit_record.surface);
+                case "cone": return getSurfaceNormalAtPointOnCone();
                 default: return null;
             }
         }

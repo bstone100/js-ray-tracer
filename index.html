@@ -103,210 +103,210 @@
             }
         ];
 
-        // const scene = [
-        //     {
-        //         name: "s1",
-        //         center: {
-        //             x: -0.5,
-        //             y: 0.5,
-        //             z: 0.5
-        //         },
-        //         radius: 0.2,
-        //         color: {
-        //             r: 255,
-        //             g: 0,
-        //             b: 0,
-        //             a: 255
-        //         },
-        //         type: "sphere",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "s2",
-        //         center: {
-        //             x: 0,
-        //             y: 0,
-        //             z: 0.25
-        //         },
-        //         radius: 0.15,
-        //         color: {
-        //             r: 0,
-        //             g: 255,
-        //             b: 0,
-        //             a: 255
-        //         },
-        //         type: "sphere",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "s3",
-        //         center: {
-        //             x: 0.5,
-        //             y: -0.5,
-        //             z: 0.75
-        //         },
-        //         radius: 0.25,
-        //         color: {
-        //             r: 0,
-        //             g: 0,
-        //             b: 255,
-        //             a: 255
-        //         },
-        //         type: "sphere",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "box1",
-        //         center: {
-        //             x: 0.5,
-        //             y: 0.5,
-        //             z: 1
-        //         },
-        //         width: 0.5,
-        //         height: 0.5,
-        //         depth: 0.5,
-        //         color: {
-        //             r: 0,
-        //             g: 255,
-        //             b: 255,
-        //             a: 255
-        //         },
-        //         type: "box",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "box2",
-        //         center: {
-        //             x: -0.5,
-        //             y: -0.5,
-        //             z: 0
-        //         },
-        //         width: 0.5,
-        //         height: 0.2,
-        //         depth: 1.5,
-        //         color: {
-        //             r: 255,
-        //             g: 0,
-        //             b: 255,
-        //             a: 255
-        //         },
-        //         type: "box",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "cylinder1",
-        //         center: {
-        //             x: 0.5,
-        //             y: -0.5,
-        //             z: 0
-        //         },
-        //         radius: 0.25,
-        //         height: 0.75,
-        //         color: {
-        //             r: 150,
-        //             g: 150,
-        //             b: 75,
-        //             a: 255
-        //         },
-        //         type: "cylinder",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "cylinder2",
-        //         center: {
-        //             x: -0.5,
-        //             y: -0.5,
-        //             z: 0.75
-        //         },
-        //         radius: 0.5,
-        //         height: 0.25,
-        //         color: {
-        //             r: 75,
-        //             g: 150,
-        //             b: 150,
-        //             a: 255
-        //         },
-        //         type: "cylinder",
-        //         material: "diffuse"
-        //     },
-        //     {
-        //         name: "cone1",
-        //         center: {
-        //             x: 0,
-        //             y: 0,
-        //             z: 0.25
-        //         },
-        //         radius: 0.2,
-        //         height: 0.4,
-        //         color: {
-        //             r: 50,
-        //             g: 150,
-        //             b: 150,
-        //             a: 255
-        //         },
-        //         type: "cone",
-        //         material: "diffuse"
-        //     },
-        //     // this sphere will act as the floor, underneath the other spheres
-        //     {
-        //         name: "floor",
-        //         center: {
-        //             x: 0,
-        //             y: -100.5,
-        //             z: 0
-        //         },
-        //         radius: 100,
-        //         color: {
-        //             r: 255,
-        //             g: 255,
-        //             b: 0,
-        //             a: 255
-        //         },
-        //         type: "sphere",
-        //         material: "diffuse"
-        //     }
-        // ];
-
-        // axes made of cylinders and cones
-        // wait we can't do this yet because the cylinder intersection code doesn't handle rotation
         const scene = [
             {
-                name: "yAxisCylinder",
-                type: "cylinder",
-                height: 1,
-                radius: 0.01,
+                name: "s1",
                 center: {
-                    x: 0,
+                    x: -0.5,
                     y: 0.5,
-                    z: 0
+                    z: 0.5
                 },
+                radius: 0.2,
                 color: {
-                    r: 0,
-                    g: 255,
+                    r: 255,
+                    g: 0,
                     b: 0,
                     a: 255
                 },
+                type: "sphere",
                 material: "diffuse"
             },
             {
-                name: "yAxisCone",
-                type: "cone",
-                height: .05,
-                radius: 0.02,
+                name: "s2",
                 center: {
                     x: 0,
-                    y: 1.025,
-                    z: 0
+                    y: 0,
+                    z: 0.25
                 },
+                radius: 0.15,
                 color: {
                     r: 0,
                     g: 255,
                     b: 0,
                     a: 255
                 },
+                type: "sphere",
+                material: "diffuse"
+            },
+            {
+                name: "s3",
+                center: {
+                    x: 0.5,
+                    y: -0.5,
+                    z: 0.75
+                },
+                radius: 0.25,
+                color: {
+                    r: 0,
+                    g: 0,
+                    b: 255,
+                    a: 255
+                },
+                type: "sphere",
+                material: "diffuse"
+            },
+            {
+                name: "box1",
+                center: {
+                    x: 0.5,
+                    y: 0.5,
+                    z: 1
+                },
+                width: 0.5,
+                height: 0.5,
+                depth: 0.5,
+                color: {
+                    r: 0,
+                    g: 255,
+                    b: 255,
+                    a: 255
+                },
+                type: "box",
+                material: "diffuse"
+            },
+            {
+                name: "box2",
+                center: {
+                    x: -0.5,
+                    y: -0.5,
+                    z: 0
+                },
+                width: 0.5,
+                height: 0.2,
+                depth: 1.5,
+                color: {
+                    r: 255,
+                    g: 0,
+                    b: 255,
+                    a: 255
+                },
+                type: "box",
+                material: "diffuse"
+            },
+            {
+                name: "cylinder1",
+                center: {
+                    x: 0.5,
+                    y: -0.5,
+                    z: 0
+                },
+                radius: 0.25,
+                height: 0.75,
+                color: {
+                    r: 150,
+                    g: 150,
+                    b: 75,
+                    a: 255
+                },
+                type: "cylinder",
+                material: "diffuse"
+            },
+            {
+                name: "cylinder2",
+                center: {
+                    x: -0.5,
+                    y: -0.5,
+                    z: 0.75
+                },
+                radius: 0.5,
+                height: 0.25,
+                color: {
+                    r: 75,
+                    g: 150,
+                    b: 150,
+                    a: 255
+                },
+                type: "cylinder",
+                material: "diffuse"
+            },
+            {
+                name: "cone1",
+                center: {
+                    x: 0,
+                    y: 0,
+                    z: 0.25
+                },
+                radius: 0.2,
+                height: 0.4,
+                color: {
+                    r: 50,
+                    g: 150,
+                    b: 150,
+                    a: 255
+                },
+                type: "cone",
+                material: "diffuse"
+            },
+            // this sphere will act as the floor, underneath the other spheres
+            {
+                name: "floor",
+                center: {
+                    x: 0,
+                    y: -100.5,
+                    z: 0
+                },
+                radius: 100,
+                color: {
+                    r: 255,
+                    g: 255,
+                    b: 0,
+                    a: 255
+                },
+                type: "sphere",
                 material: "diffuse"
             }
         ];
+
+        // axes made of cylinders and cones
+        // wait we can't do this yet because the cylinder intersection code doesn't handle rotation
+        // const scene = [
+        //     {
+        //         name: "yAxisCylinder",
+        //         type: "cylinder",
+        //         height: 1,
+        //         radius: 0.01,
+        //         center: {
+        //             x: 0,
+        //             y: 0.5,
+        //             z: 0
+        //         },
+        //         color: {
+        //             r: 0,
+        //             g: 255,
+        //             b: 0,
+        //             a: 255
+        //         },
+        //         material: "diffuse"
+        //     },
+        //     {
+        //         name: "yAxisCone",
+        //         type: "cone",
+        //         height: .05,
+        //         radius: 0.02,
+        //         center: {
+        //             x: 0,
+        //             y: 1.025,
+        //             z: 0
+        //         },
+        //         color: {
+        //             r: 0,
+        //             g: 255,
+        //             b: 0,
+        //             a: 255
+        //         },
+        //         material: "diffuse"
+        //     }
+        // ];
 
 
         function dot(vec1, vec2) {
@@ -924,15 +924,23 @@
 
                     // return surfaceNormalToColor(surfaceNormal);
 
+                    const objectColor = hit_record.object.color;
                     const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hit_record.point);
                     const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
-                    const factor = 0.7;
+
                     return {
-                        r: bounceColor.r * factor,
-                        g: bounceColor.g * factor,
-                        b: bounceColor.b * factor,
+                        r: objectColor.r / 255 * bounceColor.r,
+                        g: objectColor.g / 255 * bounceColor.g,
+                        b: objectColor.b / 255 * bounceColor.b,
                         a: 255
                     };
+                    // const factor = 0.7;
+                    // return {
+                    //     r: bounceColor.r * factor,
+                    //     g: bounceColor.g * factor,
+                    //     b: bounceColor.b * factor,
+                    //     a: 255
+                    // };
                 }
 
                 return hit_record.object.color;

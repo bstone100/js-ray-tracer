@@ -9,7 +9,7 @@ My goal is to get back into 3D graphics programming by making a ray tracer. I'm 
 </ul>
 
 ### What have you learned so far?
-I've learned that the core ray tracing algorithm is quite simple: for each pixel in your canvas, you fire a ray into your scene, grab the color of the object that your ray hit, and paint the pixel that color.
+I've learned that the core ray tracing algorithm is quite simple: for each pixel in your canvas, you fire a ray into your scene, grab the color of the object that your ray hit, and paint the pixel that color. To figure out where to shoot your rays, you need to use linear algebra to compute where the viewport is in 3D space, given the location of your camera in 3D space. Checking if your ray hit an object can be more or less complicated, depending on the shape of the object. So far, I've implemented spheres -> cubes -> cylinders -> cones, and each has had a more complicated ray intersection algorithm than the previous one. Each shape also has an algorithm to compute the surface normal at any point on its surface, which you need to compute where your ray should bounce after hitting the object. I haven't yet properly implemented colors; right now all my objects take on the color of the sky.
 
 
 ### Images produced by my ray tracer

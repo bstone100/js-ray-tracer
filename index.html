@@ -201,7 +201,7 @@
                     z: 0
                 },
                 radius: 0.25,
-                height: 2,
+                height: 0.75,
                 color: {
                     r: 150,
                     g: 150,
@@ -227,6 +227,24 @@
                     a: 255
                 },
                 type: "cylinder",
+                material: "diffuse"
+            },
+            {
+                name: "cone1",
+                center: {
+                    x: 0,
+                    y: 0,
+                    z: 0.25
+                },
+                radius: 0.2,
+                height: 0.4,
+                color: {
+                    r: 50,
+                    g: 150,
+                    b: 150,
+                    a: 255
+                },
+                type: "cone",
                 material: "diffuse"
             },
             // this sphere will act as the floor, underneath the other spheres
@@ -660,12 +678,12 @@
 
                 // check that y is within range
                 main1Valid = mainT1 >= 0 &&
-                             mainPoint1.y >= cone.center - cone.height / 2 &&
-                             mainPoint1.y <= cone.center + cone.height / 2;
+                             mainPoint1.y >= cone.center.y - cone.height / 2 &&
+                             mainPoint1.y <= cone.center.y + cone.height / 2;
 
-                main2Valid = mainT1 >= 0 &&
-                             mainPoint2.y >= cone.center - cone.height / 2 &&
-                             mainPoint2.y <= cone.center + cone.height / 2;
+                main2Valid = mainT2 >= 0 &&
+                             mainPoint2.y >= cone.center.y - cone.height / 2 &&
+                             mainPoint2.y <= cone.center.y + cone.height / 2;
             }
 
             // now it's time to check the bottom surface of the cone
@@ -775,7 +793,18 @@
         function getSurfaceNormalAtPointOnCone(cone, point, surface) {
             switch (surface) {
                 case "bottom": return {x: 0, y: -1, z: 0};
-                // case "main":
+                case "main": {
+                    // the following algorithm was derived by putting the equation for points on the main surface into the form F(x, y, z) = 0
+                    // then finding the gradient vector by taking the partial derivatives of the equation
+                    // the gradient vector is itself the surface normal
+
+                    return unit({
+                        x: point.x,
+                        y: Math.pow(cone.radius, 2) / Math.pow(cone.height, 2) * (cone.height - point.y - cone.height / 2),
+                        z: point.z
+                    });
+
+                }
             }
         }
 
@@ -784,7 +813,7 @@
                 case "sphere": return getSurfaceNormalAtPointOnSphere(hit_record.object, hit_record.point);
                 case "box": return getSurfaceNormalAtPointOnBox(hit_record.plane);
                 case "cylinder": return getSurfaceNormalAtPointOnCylinder(hit_record.object, hit_record.point, hit_record.surface);
-                case "cone": return getSurfaceNormalAtPointOnCone();
+                case "cone": return getSurfaceNormalAtPointOnCone(hit_record.object, hit_record.point, hit_record.surface);
                 default: return null;
             }
         }

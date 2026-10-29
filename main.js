@@ -1,3 +1,11 @@
+function randomColor() {
+    return {
+        r: Math.random() * 255,
+        g: Math.random() * 255,
+        b: Math.random() * 255
+    };
+}
+
 const views = [
     {
         name: "front",
@@ -82,14 +90,9 @@ const scene = [
             z: 0.5
         },
         radius: 0.2,
-        color: {
-            r: 255,
-            g: 0,
-            b: 0,
-            a: 255
-        },
+        color: randomColor(),
         type: "sphere",
-        material: "diffuse"
+        material: "metal"
     },
     {
         name: "s2",
@@ -99,14 +102,9 @@ const scene = [
             z: 0.25
         },
         radius: 0.15,
-        color: {
-            r: 0,
-            g: 255,
-            b: 0,
-            a: 255
-        },
+        color: randomColor(),
         type: "sphere",
-        material: "diffuse"
+        material: "metal"
     },
     {
         name: "s3",
@@ -116,14 +114,9 @@ const scene = [
             z: 0.75
         },
         radius: 0.25,
-        color: {
-            r: 0,
-            g: 0,
-            b: 255,
-            a: 255
-        },
+        color: randomColor(),
         type: "sphere",
-        material: "diffuse"
+        material: "metal"
     },
     {
         name: "box1",
@@ -135,12 +128,7 @@ const scene = [
         width: 0.5,
         height: 0.5,
         depth: 0.5,
-        color: {
-            r: 0,
-            g: 255,
-            b: 255,
-            a: 255
-        },
+        color: randomColor(),
         type: "box",
         material: "diffuse"
     },
@@ -154,12 +142,7 @@ const scene = [
         width: 0.5,
         height: 0.2,
         depth: 1.5,
-        color: {
-            r: 255,
-            g: 0,
-            b: 255,
-            a: 255
-        },
+        color: randomColor(),
         type: "box",
         material: "diffuse"
     },
@@ -172,14 +155,9 @@ const scene = [
         },
         radius: 0.25,
         height: 0.75,
-        color: {
-            r: 150,
-            g: 150,
-            b: 75,
-            a: 255
-        },
+        color: randomColor(),
         type: "cylinder",
-        material: "diffuse"
+        material: "metal"
     },
     {
         name: "cylinder2",
@@ -190,14 +168,9 @@ const scene = [
         },
         radius: 0.5,
         height: 0.25,
-        color: {
-            r: 75,
-            g: 150,
-            b: 150,
-            a: 255
-        },
+        color: randomColor(),
         type: "cylinder",
-        material: "diffuse"
+        material: "metal"
     },
     {
         name: "cone1",
@@ -208,12 +181,7 @@ const scene = [
         },
         radius: 0.2,
         height: 0.4,
-        color: {
-            r: 50,
-            g: 150,
-            b: 150,
-            a: 255
-        },
+        color: randomColor(),
         type: "cone",
         material: "diffuse"
     },
@@ -226,12 +194,7 @@ const scene = [
             z: 0
         },
         radius: 100,
-        color: {
-            r: 255,
-            g: 255,
-            b: 0,
-            a: 255
-        },
+        color: randomColor(),
         type: "sphere",
         material: "diffuse"
     }
@@ -848,18 +811,22 @@ function flipVector(vec) {
 function makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint) {
     let bounceDirection = makeRandomUnitVector();
 
-    // if (dot(surfaceNormal, bounceDirection) < 0) {
-    //     bounceDirection = flipVector(bounceDirection);
-    // }
-
     return {
         origin: hitPoint,
         direction: unit(add(surfaceNormal, bounceDirection))
     };
-    // return {
-    //     origin: hitPoint,
-    //     direction: bounceDirection
-    // };
+}
+
+function makeBounceRayForMetalSurfaceHit(surfaceNormal, hitPoint, incomingRay) {
+    // this is a mirror reflection
+    // R = v - 2(v • N)N, where v is incomingRay.direction, N is surfaceNormal
+
+    const bounceDirection = sub(incomingRay.direction, scale(2 * dot(incomingRay.direction, surfaceNormal), surfaceNormal));
+
+    return {
+        origin: hitPoint,
+        direction: unit(bounceDirection)
+    };
 }
 
 function surfaceNormalToColor(surfaceNormal) {
@@ -904,13 +871,21 @@ function getColorAtRayHitPoint(ray, maxBounces, bounce) {
                 b: objectColor.b / 255 * bounceColor.b,
                 a: 255
             };
-            // const factor = 0.7;
-            // return {
-            //     r: bounceColor.r * factor,
-            //     g: bounceColor.g * factor,
-            //     b: bounceColor.b * factor,
-            //     a: 255
-            // };
+        } else if (hit_record.object.material === "metal") {
+            const surfaceNormal = getSurfaceNormalAtPointOnObject(hit_record);
+
+            // return surfaceNormalToColor(surfaceNormal);
+
+            const objectColor = hit_record.object.color;
+            const bounceRay = makeBounceRayForMetalSurfaceHit(surfaceNormal, hit_record.point, ray);
+            const bounceColor = getColorAtRayHitPoint(bounceRay, maxBounces, bounce + 1);
+
+            return {
+                r: objectColor.r / 255 * bounceColor.r,
+                g: objectColor.g / 255 * bounceColor.g,
+                b: objectColor.b / 255 * bounceColor.b,
+                a: 255
+            };
         }
 
         return hit_record.object.color;
@@ -922,12 +897,6 @@ function getColorAtRayHitPoint(ray, maxBounces, bounce) {
             b: 255,
             a: 255
         };
-        // return {
-        //     r: 255,
-        //     g: 255,
-        //     b: 255,
-        //     a: 255
-        // };
     }
 }
 
@@ -937,7 +906,7 @@ const timeBudget = 10; // ms
 
 function renderView(view) {
     return new Promise((resolve) => {
-        const size = 2048;
+        const size = Math.pow(2, 12);
         view.canvas.width = size;
         view.canvas.height = size;
         const canvasWidth = view.canvas.width;
@@ -1014,7 +983,8 @@ function renderView(view) {
     });
 }
 
-for (const view of views) {
-    await renderView(view);
-}
+// for (const view of views) {
+//     await renderView(view);
+// }
 
+await renderView(views[0]);

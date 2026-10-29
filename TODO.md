@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Implement colors for diffuse materials
+- [x] Implement colors for diffuse materials
 - [ ] Build axes using cylinders and cones
   - [ ] this requires first allowing cylinders and cones to be rotated
   - [ ] that means changing the intersection and surface normal algorithms
@@ -11,3 +11,5 @@
 - [ ] Implement shadows
 - [ ] Be able to swap in different scenes
 - [ ] Be able to move the camera around
+- [x] Make painting non-blocking
+- [ ] Make ray tracing parallelized using web workers

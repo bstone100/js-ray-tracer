@@ -1,5 +1,7 @@
 # TODO
 
+## Features
+
 - [x] Implement colors for diffuse materials
 - [ ] Build axes using cylinders and cones
   - [ ] this requires first allowing cylinders and cones to be rotated
@@ -13,3 +15,7 @@
 - [ ] Be able to move the camera around
 - [x] Make painting non-blocking
 - [ ] Make ray tracing parallelized using web workers
+
+## Bugs
+
+- [ ] Figure out why the tops of metal cylinders aren't reflecting

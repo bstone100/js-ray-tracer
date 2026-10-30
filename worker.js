@@ -1,49 +1,90 @@
-// a worker is going to ray trace a part of an image
-
-// main script is going to assign part of an image to the worker
-// worker is going to ray trace that part and return the final pixels to the main script which will then update the screen
+import {
+    randomLocationInsideCanvasPixelToWorldSpace,
+    getColorAtRayHitPoint,
+    getViewportSizeFromCamera
+} from "./utils.js";
 
 self.addEventListener("message", (event) => {
 
-    // event.data will have packed the info we need
-
-
-    // main script is telling us to start ray tracing part of an image
-
-    // ray trace here
-
-    // now notify main that we're done, and transfer the pixel color raw data to main
-    //
-    // const width = 10;
-    // const height = 10;
-    // const imageData = new ImageData(width, height);
-    //
-    // self.postMessage(imageData, {transfer: [imageData.data.buffer]});
-
-
-
-    // just test responding to the main thread
-    // event.data should be an object with members type, val1, val2
-
     if (event.data.type === "processTile") {
-        // main thread has just assigned us a tile that we need to process
 
-        const tile = event.data.tile;
+        // these are the ray tracing arguments passed by the main thread
+        const topLeft = event.data.topLeft;
+        const tileWidth = event.data.width;
+        const tileHeight = event.data.height;
+        const samplesPerPixel = event.data.samplesPerPixel;
+        const maxBounces = event.data.maxBounces;
+        const canvasSize = event.data.canvasSize;
+        const camera = event.data.camera;
+        const scene = event.data.scene
 
-        // simulate blocking work
+        const imageData = new ImageData(tileWidth, tileHeight);
 
-        const startTime = performance.now();
-        let counter = 0;
+        for (let canvasY = topLeft.y; canvasY < topLeft.y + tileHeight; canvasY++) {
+            for (let canvasX = topLeft.x; canvasX < topLeft.x + tileWidth; canvasX++) {
+                const totalColor = {
+                    r: 0,
+                    g: 0,
+                    b: 0
+                };
+                for (let sample = 0; sample < samplesPerPixel; sample++) {
+                    // do ray tracing here
 
-        while (performance.now() - startTime < 3000) {
-            counter++;
+                    const rayTarget = randomLocationInsideCanvasPixelToWorldSpace({x: canvasX, y: canvasY},
+                        canvasSize,
+                        getViewportSizeFromCamera(camera),
+                        camera);
+
+                    const ray = {
+                        origin: camera.center,
+                        direction: rayTarget
+                    };
+
+                    const color = getColorAtRayHitPoint(ray, scene, maxBounces, 0);
+
+                    totalColor.r += color.r;
+                    totalColor.g += color.g;
+                    totalColor.b += color.b;
+                }
+                const averageColor = {
+                    r: totalColor.r / samplesPerPixel,
+                    g: totalColor.g / samplesPerPixel,
+                    b: totalColor.b / samplesPerPixel,
+                    a: 255
+                };
+
+                // write the color into the buffer
+                // topLeft in canvas space is 0,0 in the buffer
+                // (x,y) to array offset is 4(y * width + x), with x and y in tile space
+
+                const offset = 4 * ((canvasY - topLeft.y) * tileWidth + (canvasX - topLeft.x));
+                imageData.data[offset] = averageColor.r;
+                imageData.data[offset + 1] = averageColor.g;
+                imageData.data[offset + 2] = averageColor.b;
+                imageData.data[offset + 3] = averageColor.a;
+            }
         }
+
+        // now imageData is all filled up
+        // time to notify the main thread and transfer ownership of the buffer to the main thread
 
         self.postMessage({
             type: "processTileFinished",
-            tile,
-            counter
+            imageData,
+            topLeft
+        }, {
+            transfer: [imageData.data.buffer] // we have to transfer the ArrayBuffer since it is one of the transferable types
         });
     }
 
 });
+
+
+
+
+
+
+
+
+
+

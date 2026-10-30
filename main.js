@@ -1024,26 +1024,47 @@ function assignWork(worker) {
 
 // we're done when all workers are idle and there is no more work
 
-
-
 // spawn workers (threads)
 const workers = [];
+
+function isAllWorkDone() {
+    for (const worker of workers) {
+        if (worker.working) return false;
+    }
+
+    return nextTile >= tileCount;
+}
+
+const startTime = performance.now();
+
 for (let i = 0; i < workerPoolSize; i++) {
     const worker = new Worker("./worker.js", {type: "module"});
 
     worker.addEventListener("message", (event) => {
         if (event.data.type === "processTileFinished") {
-            // console.log(`worker[${i}] finished tile ${event.data.tile}`);
 
-            const working = assignWork(worker);
+            workers[i].working = assignWork(worker);
 
-            workers[i].working = working;
+            workers[i].counter += event.data.counter;
+
+            // if working is false then there is no more work, but other workers might still be working
+            // we can check here if we're actually done
+
+            if (isAllWorkDone()) {
+                const endTime = performance.now();
+                console.log("DONE");
+                console.log(`the work took ${(endTime - startTime) / 1000}s to complete`);
+                console.log(workers);
+            } else {
+                console.log(`t = ${performance.now() - startTime}`);
+            }
         }
     });
 
     workers.push({
         worker,
-        working: assignWork(worker)
+        working: assignWork(worker),
+        counter: 0
     });
 }
 

@@ -30,16 +30,20 @@ self.addEventListener("message", (event) => {
 
         const tile = event.data.tile;
 
-        // simulate work
+        // simulate blocking work
 
-        console.log(`starting to process tile ${tile}`);
+        const startTime = performance.now();
+        let counter = 0;
 
-        setTimeout(() => {
-            self.postMessage({
-                type: "processTileFinished",
-                tile
-            });
-        }, 3000);
+        while (performance.now() - startTime < 3000) {
+            counter++;
+        }
+
+        self.postMessage({
+            type: "processTileFinished",
+            tile,
+            counter
+        });
     }
 
 });

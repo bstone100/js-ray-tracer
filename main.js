@@ -127,13 +127,53 @@ function renderView(view, params) {
 // grab the render buttons
 // add click callbacks
 
-const renderButtons = document.querySelectorAll(".renderButton");
 
-const canvasSizeSelect = document.querySelector("#canvasSize");
-const samplesPerPixelSelect = document.querySelector("#samplesPerPixel");
-const maxBouncesSelect = document.querySelector("#maxBounces");
-const tileSizeSelect = document.querySelector("#tileSize");
-const workerPoolSizeSelect = document.querySelector("#workerPoolSize");
+
+// save settings to local storage when they change
+
+const params = [
+    "canvasSize",
+    "samplesPerPixel",
+    "maxBounces",
+    "tileSize",
+    "workerPoolSize"
+];
+
+// save values to local storage when they change
+for (const param of params) {
+    const selectElement = document.getElementById(param);
+
+    selectElement.addEventListener("change", () => {
+        localStorage.setItem(param, selectElement.value);
+    });
+}
+
+// load values from local storage and set the active option in the select
+function loadParams() {
+    for (const param of params) {
+        const value = localStorage.getItem(param);
+        if (value) {
+            const selectElement = document.getElementById(param);
+            selectElement.value = value;
+        }
+    }
+}
+
+// get the values from the select elements and build an object
+function getCurrentParams() {
+    const obj = {};
+
+    for (const param of params) {
+        const selectElement = document.getElementById(param);
+        obj[param] = Number.parseInt(selectElement.value, 10);
+    }
+
+    return obj;
+}
+
+loadParams();
+
+const renderButtons = document.querySelectorAll(".renderButton");
 
 for (const renderButton of renderButtons) {
     renderButton.addEventListener("click", async () => {
@@ -141,13 +181,7 @@ for (const renderButton of renderButtons) {
 
         const view = views.find((view) => view.id === viewId);
 
-        await renderView(view, {
-            canvasSize: parseInt(canvasSizeSelect.value, 10),
-            samplesPerPixel: parseInt(samplesPerPixelSelect.value, 10),
-            maxBounces: parseInt(maxBouncesSelect.value, 10),
-            tileSize: parseInt(tileSizeSelect.value, 10),
-            workerPoolSize: parseInt(workerPoolSizeSelect.value, 10)
-        });
+        await renderView(view, getCurrentParams());
     });
 }
 

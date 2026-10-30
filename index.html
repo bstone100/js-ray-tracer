@@ -13,27 +13,104 @@
             image-rendering: pixelated;
             /*filter: blur(3px);*/
         }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
     </style>
     <script type="module" src="main.js"></script>
 </head>
 <body>
     <h1>My first ray tracer</h1>
     <p>This is my first attempt to write a ray tracer. It's inspired by the book <cite><a href="" target="_blank">Ray Tracing in One Weekend</a> by Peter Shirley</cite> and the book <cite><a href="" target="_blank">Computer Graphics from Scratch</a> by Gabriel Gambetta</cite>.
-    <p>The first version is going to be just rendering some spheres in a <code>&lt;canvas&gt;</code> element.</p>
 
-    <button id="startButton">Start Rendering</button>
+
+    <!-- ray tracing parameters -->
+
+    <!-- samplesPerPixel, maxBounces, canvasWidthPixels, canvasHeightPixels, tileWidthPixels, tileHeightPixels, workerPoolSize -->
+
+
+
+    <fieldset>
+        <legend>Controls</legend>
+        <div class="controls-container">
+            <label>
+                Canvas size (px):
+                <select id="canvasSize">
+                    <option>128</option>
+                    <option>256</option>
+                    <option>512</option>
+                    <option selected>1024</option>
+                    <option>2048</option>
+                    <option>4096</option>
+                </select>
+            </label>
+            <label>
+                Samples per pixel:
+                <select id="samplesPerPixel">
+                    <option>1</option>
+                    <option>5</option>
+                    <option selected>10</option>
+                    <option>20</option>
+                    <option>30</option>
+                </select>
+            </label>
+            <label>
+                Max bounces (recursion depth):
+                <select id="maxBounces">
+                    <option>1</option>
+                    <option>5</option>
+                    <option selected>10</option>
+                    <option>20</option>
+                    <option>30</option>
+                </select>
+            </label>
+            <label>
+                Tile size (px):
+                <select id="tileSize">
+                    <option>1</option>
+                    <option>16</option>
+                    <option>32</option>
+                    <option selected>64</option>
+                    <option>128</option>
+                </select>
+            </label>
+            <label>
+                Worker count (threads):
+                <select id="workerPoolSize">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>4</option>
+                    <option selected>8</option>
+                    <option>16</option>
+                </select>
+            </label>
+        </div>
+    </fieldset>
+
 
     <h2>Front view</h2>
     <p>In this view the camera is in front of all the objects, staring down the +Z axis, so we're seeing the YX plane.</p>
-    <canvas id="front-view"></canvas>
+    <div>
+        <button class="renderButton" data-view-id="front-view">Render</button>
+    </div>
+    <canvas data-view-id="front-view"></canvas>
 
     <h2>Right view</h2>
     <p>In this view the camera is to the right of all the objects, staring down the -X axis, so we're seeing the YZ plane.</p>
-    <canvas id="right-view"></canvas>
+    <div>
+        <button class="renderButton" data-view-id="right-view">Render</button>
+    </div>
+    <canvas data-view-id="right-view"></canvas>
 
     <h2>Top-down view</h2>
     <p>In this view the camera is above all the objects, looking down upon them, staring down the -Y axis, so we're seeing the ZX plane.</p>
-    <canvas id="top-view"></canvas>
+    <div>
+        <button class="renderButton" data-view-id="top-view">Render</button>
+    </div>
+    <canvas data-view-id="top-view"></canvas>
 </body>
 </html>
 

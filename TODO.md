@@ -15,6 +15,10 @@
 - [ ] Be able to move the camera around
 - [x] Make painting non-blocking
 - [x] Make ray tracing parallelized using web workers
+- [x] Add UI for editing the ray tracing parameters
+- [ ] Do progressive refinement
+  - [ ] do one or more low res passes over the full image
+  - [ ] could apply a blur filter and reduce its strength every pass 
 
 ## Bugs
 

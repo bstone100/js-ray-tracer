@@ -1,7 +1,7 @@
 export const views = [
     {
         name: "front",
-        canvas: document.querySelector("#front-view"),
+        id: "front-view",
         camera: {
             center: {
                 x: 0,
@@ -25,7 +25,7 @@ export const views = [
     },
     {
         name: "right",
-        canvas: document.querySelector("#right-view"),
+        id: "right-view",
         camera: {
             center: {
                 x: 1,
@@ -49,7 +49,7 @@ export const views = [
     },
     {
         name: "top",
-        canvas: document.querySelector("#top-view"),
+        id: "top-view",
         camera: {
             center: {
                 x: 0,

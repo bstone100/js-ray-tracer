@@ -7,14 +7,20 @@ const maxBounces = 10;
 const canvasWidthPixels = 1024;
 const canvasHeightPixels = 1024;
 
-const tileWidthPixels = 16;
-const tileHeightPixels = 16;
+const view = views[0];
+const canvas = view.canvas;
+canvas.width = canvasWidthPixels;
+canvas.height = canvasHeightPixels;
+const canvasContext = canvas.getContext("2d");
+
+const tileWidthPixels = 64;
+const tileHeightPixels = 64;
 
 // assume for now these are divisible
 const canvasWidthTiles = canvasWidthPixels / tileWidthPixels; // 64
 const canvasHeightTiles = canvasHeightPixels / tileHeightPixels; // 64
 
-const workerPoolSize = 4;
+const workerPoolSize = 8;
 
 // the x and y are in "tile" space
 let currentTile = {
@@ -77,14 +83,6 @@ function isAllWorkDone() {
     return !isCurrentTileValid();
 }
 
-// let's again temporarily just use the first view
-
-const view = views[0];
-const canvas = view.canvas;
-canvas.width = canvasWidthPixels;
-canvas.height = canvasHeightPixels;
-const canvasContext = canvas.getContext("2d");
-
 const startTime = performance.now();
 
 for (let i = 0; i < workerPoolSize; i++) {
@@ -103,8 +101,6 @@ for (let i = 0; i < workerPoolSize; i++) {
                 const endTime = performance.now();
                 console.log("DONE");
                 console.log(`the work took ${(endTime - startTime) / 1000}s to complete`);
-            } else {
-                console.log(`t = ${performance.now() - startTime}`);
             }
         }
     });
@@ -115,9 +111,11 @@ for (let i = 0; i < workerPoolSize; i++) {
     });
 }
 
+const startButton = document.querySelector("#startButton");
 
+startButton.addEventListener("click", () => {
 
-
+});
 
 
 

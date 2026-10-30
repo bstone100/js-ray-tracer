@@ -906,7 +906,7 @@ const timeBudget = 10; // ms
 
 function renderView(view) {
     return new Promise((resolve) => {
-        const size = Math.pow(2, 12);
+        const size = Math.pow(2, 10);
         view.canvas.width = size;
         view.canvas.height = size;
         const canvasWidth = view.canvas.width;
@@ -983,8 +983,88 @@ function renderView(view) {
     });
 }
 
+
+// okay that works so let's make a pool of n workers, and divide an image into tiles of size m
+// then we'll hand out work to our workers in a loop
+
+const canvasSizePixels = Math.pow(2, 10) // 1024px x 1024px
+const tileSizePixels = Math.pow(2, 4); // 16px x 16px tiles
+const tileCount = canvasSizePixels / tileSizePixels; // this is the amount of tasks there are for the workers, in this case 64
+
+const canvasWidth = canvasSizePixels;
+const canvasHeight = canvasSizePixels;
+
+// with 64 tasks (tiles) and 4 workers, each worker should get around 16 tasks each
+// there should be 4 tasks being completed in parallel (4 tiles being painted simultaneously)
+const workerPoolSize = 4;
+
+// tiles could be any dimension but we'll keep the canvas and tiles square for now
+
+// we will go left to right, top to bottom for tiles
+// when a worker finishes its tile, we'll assign it the next available tile
+
+
+// when assigning tiles, we just need to keep track of the last one we assigned
+// could also just track the "next" tile
+
+let nextTile = 0;
+
+function assignWork(worker) {
+    if (nextTile < tileCount) {
+        worker.postMessage({
+            type: "processTile",
+            tile: nextTile
+        });
+
+        nextTile++;
+        return true;
+    }
+    return false;
+}
+
+// we're done when all workers are idle and there is no more work
+
+
+
+// spawn workers (threads)
+const workers = [];
+for (let i = 0; i < workerPoolSize; i++) {
+    const worker = new Worker("./worker.js", {type: "module"});
+
+    worker.addEventListener("message", (event) => {
+        if (event.data.type === "processTileFinished") {
+            // console.log(`worker[${i}] finished tile ${event.data.tile}`);
+
+            const working = assignWork(worker);
+
+            workers[i].working = working;
+        }
+    });
+
+    workers.push({
+        worker,
+        working: assignWork(worker)
+    });
+}
+
+
 // for (const view of views) {
 //     await renderView(view);
 // }
 
-await renderView(views[0]);
+// await renderView(views[0]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -24,14 +24,7 @@
 </head>
 <body>
     <h1>My first ray tracer</h1>
-    <p>This is my first attempt to write a ray tracer. It's inspired by the book <cite><a href="" target="_blank">Ray Tracing in One Weekend</a> by Peter Shirley</cite> and the book <cite><a href="" target="_blank">Computer Graphics from Scratch</a> by Gabriel Gambetta</cite>.
-
-
-    <!-- ray tracing parameters -->
-
-    <!-- samplesPerPixel, maxBounces, canvasWidthPixels, canvasHeightPixels, tileWidthPixels, tileHeightPixels, workerPoolSize -->
-
-
+    <p>This is the first time I've written a ray tracer. The techniques I'm using come from the book <cite><a href="" target="_blank">Ray Tracing in One Weekend</a> by Peter Shirley</cite> and the book <cite><a href="" target="_blank">Computer Graphics from Scratch</a> by Gabriel Gambetta</cite>.
 
     <fieldset>
         <legend><i>Ray tracing parameters</i></legend>
@@ -91,26 +84,35 @@
     </fieldset>
 
 
-    <h2>Front view</h2>
-    <p>In this view the camera is in front of all the objects, staring down the +Z axis, so we're seeing the YX plane.</p>
-    <div>
-        <button class="renderButton" data-view-id="front-view">Render</button>
+    <div class="view" data-view-id="front-view">
+        <h2>Front view</h2>
+        <p>In this view the camera is in front of all the objects, staring down the +Z axis, so we're seeing the YX plane.</p>
+        <div>
+            <button class="renderButton">Render</button>
+            <p>Rendering took <span class="duration"></span>s to complete</p>
+        </div>
+        <canvas></canvas>
     </div>
-    <canvas data-view-id="front-view"></canvas>
 
-    <h2>Right view</h2>
-    <p>In this view the camera is to the right of all the objects, staring down the -X axis, so we're seeing the YZ plane.</p>
-    <div>
-        <button class="renderButton" data-view-id="right-view">Render</button>
+    <div class="view" data-view-id="right-view">
+        <h2>Right view</h2>
+        <p>In this view the camera is to the right of all the objects, staring down the -X axis, so we're seeing the YZ plane.</p>
+        <div>
+            <button class="renderButton">Render</button>
+            <p>Rendering took <span class="duration"></span>s to complete</p>
+        </div>
+        <canvas></canvas>
     </div>
-    <canvas data-view-id="right-view"></canvas>
 
-    <h2>Top-down view</h2>
-    <p>In this view the camera is above all the objects, looking down upon them, staring down the -Y axis, so we're seeing the ZX plane.</p>
-    <div>
-        <button class="renderButton" data-view-id="top-view">Render</button>
+    <div class="view" data-view-id="top-view">
+        <h2>Top-down view</h2>
+        <p>In this view the camera is above all the objects, looking down upon them, staring down the -Y axis, so we're seeing the ZX plane.</p>
+        <div>
+            <button class="renderButton">Render</button>
+            <p>Rendering took <span class="duration"></span>s to complete</p>
+        </div>
+        <canvas></canvas>
     </div>
-    <canvas data-view-id="top-view"></canvas>
 </body>
 </html>
 

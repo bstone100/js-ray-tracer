@@ -1,7 +1,7 @@
 import { views } from "./views.js";
 import { scene } from "./scenes/primitives.js";
 
-function renderView(view, params) {
+function renderView(view, canvas, params) {
     return new Promise((resolve) => {
 
         const {
@@ -17,9 +17,27 @@ function renderView(view, params) {
         const canvasWidthPixels = canvasSize;
         const canvasHeightPixels = canvasSize;
 
-        const canvas = document.querySelector(`canvas[data-view-id="${view.id}"]`);
-        canvas.width = canvasWidthPixels;
-        canvas.height = canvasHeightPixels;
+        // note: setting canvas.width or canvas.height clears the canvas
+        // this isn't what we want
+        // when we change the canvas size, the current content should remain as is
+        // that's a problem because there is a mixmatch of image data buffers
+
+        // let's say we currently have a 256px image and we switch to a 1024px image
+        // that is a 16X increase in total pixels
+
+        // we should probably just always set the canvas width and height to the maximum size from the list (4096)
+        // and for smaller canvas sizes we'll fill a 4096 buffer appropriately
+        // although that is a big waste of time to fill 16 million pixels for a 65k pixel image, for example
+
+        // I should benchmark before making that change
+
+        if (canvas.width !== canvasWidthPixels) {
+            canvas.width = canvasWidthPixels;
+        }
+        if (canvas.height !== canvasHeightPixels) {
+            canvas.height = canvasHeightPixels;
+        }
+
         const canvasContext = canvas.getContext("2d");
 
         const tileWidthPixels = tileSize;
@@ -105,10 +123,10 @@ function renderView(view, params) {
                     workers[i].working = assignWork(worker);
 
                     if (isAllWorkDone()) {
-                        const endTime = performance.now();
+                        const duration = performance.now() - startTime;
                         console.log("DONE");
-                        console.log(`the work took ${(endTime - startTime) / 1000}s to complete`);
-                        resolve();
+                        console.log(`the work took ${duration / 1000}s to complete`);
+                        resolve(duration);
                     }
                 }
             });
@@ -173,15 +191,19 @@ function getCurrentParams() {
 
 loadParams();
 
-const renderButtons = document.querySelectorAll(".renderButton");
+const viewDivs = document.querySelectorAll(".view");
 
-for (const renderButton of renderButtons) {
+for (const viewDiv of viewDivs) {
+    const renderButton = viewDiv.querySelector(".renderButton");
+    const canvas = viewDiv.querySelector("canvas");
+    const durationElement = viewDiv.querySelector(".duration");
+
+    const view = views.find((view) => view.id === viewDiv.dataset.viewId);
+
     renderButton.addEventListener("click", async () => {
-        const viewId = renderButton.dataset.viewId;
-
-        const view = views.find((view) => view.id === viewId);
-
-        await renderView(view, getCurrentParams());
+        const duration = await renderView(view, canvas, getCurrentParams());
+        durationElement.hidden = false;
+        durationElement.textContent = (duration / 1000).toFixed(2);
     });
 }
 

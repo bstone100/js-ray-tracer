@@ -6,42 +6,78 @@ function renderView(view, canvas, params) {
 
         const {
             canvasSize,
-                samplesPerPixel,
-                maxBounces,
-                tileSize,
-                workerPoolSize
+            samplesPerPixel,
+            maxBounces,
+            tileSize,
+            workerPoolSize,
+            maxCanvasSize
         } = params;
 
-        console.log(params);
 
-        const canvasWidthPixels = canvasSize;
-        const canvasHeightPixels = canvasSize;
 
-        // note: setting canvas.width or canvas.height clears the canvas
-        // this isn't what we want
-        // when we change the canvas size, the current content should remain as is
-        // that's a problem because there is a mixmatch of image data buffers
+        // return a new ImageData object
+        // imageData is a tile
+        function scaleImageData(imageData) {
+            // assume the same aspect ratio
 
-        // let's say we currently have a 256px image and we switch to a 1024px image
-        // that is a 16X increase in total pixels
+            const horizontalScale = maxCanvasSize.width / canvasSize.width;
+            const verticalScale = maxCanvasSize.height / canvasSize.height;
 
-        // we should probably just always set the canvas width and height to the maximum size from the list (4096)
-        // and for smaller canvas sizes we'll fill a 4096 buffer appropriately
-        // although that is a big waste of time to fill 16 million pixels for a 65k pixel image, for example
+            // we're scaling a tile not the whole image
+            // if this tile is 64x64 in canvas space, then it will be a 512x512 tile in the scaled imaged
+            const scaledImageData = new ImageData(imageData.width * horizontalScale, imageData.height * verticalScale);
 
-        // I should benchmark before making that change
+            // go through every pixel in imageData
+            // for each pixel in imageData, set a whole region (tile) of scaledImageData to be that color
 
-        if (canvas.width !== canvasWidthPixels) {
-            canvas.width = canvasWidthPixels;
+
+            for (let originalY = 0; originalY < imageData.height; originalY++) {
+                for (let originalX = 0; originalX < imageData.width; originalX++) {
+                    const offset = 4 * (originalY * imageData.width + originalX);
+
+                    const color = {
+                        r: imageData.data[offset],
+                        g: imageData.data[offset + 1],
+                        b: imageData.data[offset + 2],
+                        a: imageData.data[offset + 3]
+                    };
+
+                    // now scale this color to a whole region
+                    // where is top left in the scaled image
+                    const topLeft = {
+                        x: originalX * horizontalScale,
+                        y: originalY * verticalScale
+                    };
+
+                    // the size of the region is the two scales
+                    for (let scaledY = topLeft.y; scaledY < topLeft.y + verticalScale; scaledY++) {
+                        for (let scaledX = topLeft.x; scaledX < topLeft.x + horizontalScale; scaledX++) {
+                            // paint the whole region with this color
+
+                            const scaledOffset = 4 * (scaledY * scaledImageData.width + scaledX);
+
+                            scaledImageData.data[scaledOffset] = color.r;
+                            scaledImageData.data[scaledOffset + 1] = color.g;
+                            scaledImageData.data[scaledOffset + 2] = color.b;
+                            scaledImageData.data[scaledOffset + 3] = color.a;
+                        }
+                    }
+
+                }
+            }
+
+            return scaledImageData;
         }
-        if (canvas.height !== canvasHeightPixels) {
-            canvas.height = canvasHeightPixels;
-        }
+
+
+
+        const canvasWidthPixels = canvasSize.width;
+        const canvasHeightPixels = canvasSize.height;
 
         const canvasContext = canvas.getContext("2d");
 
-        const tileWidthPixels = tileSize;
-        const tileHeightPixels = tileSize;
+        const tileWidthPixels = tileSize.width;
+        const tileHeightPixels = tileSize.height;
 
         // assume for now these are divisible
         const canvasWidthTiles = canvasWidthPixels / tileWidthPixels;
@@ -116,8 +152,31 @@ function renderView(view, canvas, params) {
             worker.addEventListener("message", (event) => {
                 if (event.data.type === "processTileFinished") {
 
-                    // this should update the screen
-                    canvasContext.putImageData(event.data.imageData, event.data.topLeft.x, event.data.topLeft.y);
+                    // update the screen
+                    // let's change this such that the canvas html dimensions are always the max dimensions
+                    // but the canvas virtual dimensions can be smaller
+                    // we'll just fill the max buffer using the virtual dimensions scaled up
+
+                    // so our worker has just returned to us a non-scaled ImageData object
+                    const imageData = event.data.imageData;
+
+                    // let's scale it
+                    const scaledImageData = scaleImageData(imageData);
+
+                    // now we can put the scaled image data into the canvas
+                    // we need to scale the top left coordinate as well
+
+                    const topLeft = event.data.topLeft;
+
+                    const horizontalScale = maxCanvasSize.width / canvasSize.width;
+                    const verticalScale = maxCanvasSize.height / canvasSize.height;
+
+                    const scaledTopLeft = {
+                        x: topLeft.x * horizontalScale,
+                        y: topLeft.y * verticalScale
+                    };
+
+                    canvasContext.putImageData(scaledImageData, scaledTopLeft.x, scaledTopLeft.y);
 
                     // now we can give the worker a new tile
                     workers[i].working = assignWork(worker);
@@ -189,9 +248,23 @@ function getCurrentParams() {
     return obj;
 }
 
+function getMaxCanvasSize() {
+    const selectElement = document.getElementById("canvasSize");
+    const optionElement = selectElement.options[selectElement.options.length - 1];
+
+    const size = Number.parseInt(optionElement.value, 10);
+
+    return {
+        width: size,
+        height: size
+    };
+}
+
 loadParams();
 
 const viewDivs = document.querySelectorAll(".view");
+
+const maxCanvasSize = getMaxCanvasSize();
 
 for (const viewDiv of viewDivs) {
     const renderButton = viewDiv.querySelector(".renderButton");
@@ -200,8 +273,30 @@ for (const viewDiv of viewDivs) {
 
     const view = views.find((view) => view.id === viewDiv.dataset.viewId);
 
+    // these properties should only be set once per <canvas>
+    // then, we'll scale images up to fill the max size
+    canvas.width = maxCanvasSize.width;
+    canvas.height = maxCanvasSize.height;
+
     renderButton.addEventListener("click", async () => {
-        const duration = await renderView(view, canvas, getCurrentParams());
+
+        // for clarity I want all size objects to have a width and height property
+        // likewise I want all pos objects to have an x and y property
+        const currentParams = getCurrentParams();
+        const params = {
+            ...currentParams,
+            canvasSize: {
+                width: currentParams.canvasSize,
+                height: currentParams.canvasSize
+            },
+            tileSize: {
+                width: currentParams.tileSize,
+                height: currentParams.tileSize
+            },
+            maxCanvasSize
+        };
+
+        const duration = await renderView(view, canvas, params);
         durationElement.hidden = false;
         durationElement.textContent = (duration / 1000).toFixed(2);
     });

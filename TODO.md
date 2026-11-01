@@ -29,7 +29,7 @@
 - [ ] Implement textures
 - [ ] Investigate using a GPU shader instead of doing CPU ray tracing
 - [x] Make it so that running a new render on the same view visually overwrites the previous pixels
-  - [ ] Do this with no performance cost
+  - [x] Do this with no performance cost
 - [ ] Should turn scene into a tree data structure so that bounding volumes can be computed for groups of objects
 
 ## Bugs

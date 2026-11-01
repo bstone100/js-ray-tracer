@@ -15,24 +15,16 @@ function renderView(view, currentCanvas, params) {
         const canvasWidthPixels = canvasSize.width;
         const canvasHeightPixels = canvasSize.height;
 
-        // let's update the canvas dimensions here
-        // if the dimensions have changed, we need to update the <canvas>, but this wipes the image data
-        // so we need to first update the canvas dimensions or make a new canvas in the new dimensions and then paint it with the old image scaled up using context.drawImage which takes an HTMLCanvasElement as an argument
-        // I'm going to first try making a new canvas and replacing the old one with it
-
         const newCanvas = document.createElement("canvas");
 
-        // this guy gets the new dimensions
         newCanvas.width = canvasWidthPixels;
         newCanvas.height = canvasHeightPixels;
 
-        // now paint the new canvas with the old canvas's content
         const newContext = newCanvas.getContext("2d");
 
         // this takes a snapshot of the old canvas, and then scales it to fit the new canvas
         newContext.drawImage(currentCanvas, 0, 0, canvasWidthPixels, canvasHeightPixels);
 
-        // now we need to replace the old canvas with the new one
         currentCanvas.replaceWith(newCanvas);
 
         const tileWidthPixels = tileSize.width;
@@ -103,6 +95,12 @@ function renderView(view, currentCanvas, params) {
             return !isCurrentTileValid();
         }
 
+        function terminateWorkers() {
+            for (const w of workers) {
+                w.worker.terminate();
+            }
+        }
+
         const startTime = performance.now();
 
         for (let i = 0; i < workerPoolSize; i++) {
@@ -125,6 +123,7 @@ function renderView(view, currentCanvas, params) {
                         const duration = performance.now() - startTime;
                         console.log("DONE");
                         console.log(`the work took ${duration / 1000}s to complete`);
+                        terminateWorkers();
                         resolve(duration);
                     }
                 }
@@ -137,7 +136,6 @@ function renderView(view, currentCanvas, params) {
         }
     });
 }
-
 
 const params = [
     "canvasSize",

@@ -20,7 +20,7 @@
   - [ ] This is probably not feasible until we switch to GPU rendering 
 - [x] Make painting non-blocking
 - [x] Make ray tracing parallelized using web workers
-  - [ ] Make it so that there is only one group of web workers, whereas currently each new render is spawning a new group
+  - [x] Make it so that there is only one group of web workers, whereas currently each new render is spawning a new group
 - [x] Add UI for editing the ray tracing parameters
 - [ ] Do progressive refinement
   - [ ] do one or more low res passes over the full image

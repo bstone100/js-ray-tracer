@@ -421,15 +421,23 @@ function shootRayAtCone(ray, cone) {
     // the following assumes the center of the cone is in the middle of the cone, and that this center is at the world origin
 
     // once we add the ability to rotate a cone, I think we're going to need to apply the inverse cone transform to both the ray origin and ray direction
-    const shiftedOrigin = sub(ray.origin, cone.center);
+
+    // okay yeah now we can rotate a cone so let's get the ray in cone space
+
+    const inverseConeMatrix = invertTransform(cone.transform);
+
+    const localRay = {
+        origin: transformPoint(inverseConeMatrix, ray.origin),
+        direction: transformPoint(inverseConeMatrix, ray.direction)
+    };
 
     // these constants are just for convenience
     const k1 = Math.pow(cone.radius, 2) / Math.pow(cone.height, 2);
-    const k2 = cone.height - shiftedOrigin.y - cone.height / 2;
+    const k2 = cone.height - localRay.origin.y - cone.height / 2;
 
-    const a = Math.pow(ray.direction.x, 2) + Math.pow(ray.direction.z, 2) - Math.pow(ray.direction.y, 2) * k1;
-    const b = 2 * (shiftedOrigin.x * ray.direction.x + shiftedOrigin.z * ray.direction.z + ray.direction.y * k2 * k1);
-    const c = Math.pow(shiftedOrigin.x, 2) + Math.pow(shiftedOrigin.z, 2) - k1 * Math.pow(k2, 2);
+    const a = Math.pow(localRay.direction.x, 2) + Math.pow(localRay.direction.z, 2) - Math.pow(localRay.direction.y, 2) * k1;
+    const b = 2 * (localRay.origin.x * localRay.direction.x + localRay.origin.z * localRay.direction.z + localRay.direction.y * k2 * k1);
+    const c = Math.pow(localRay.origin.x, 2) + Math.pow(localRay.origin.z, 2) - k1 * Math.pow(k2, 2);
 
     const discriminant = b * b - 4 * a * c;
 
@@ -446,47 +454,46 @@ function shootRayAtCone(ray, cone) {
         mainT1 = (-b - Math.sqrt(discriminant)) / (2 * a);
         mainT2 = (-b + Math.sqrt(discriminant)) / (2 * a);
 
-        mainPoint1 = getPointOnRay(ray, mainT1);
-        mainPoint2 = getPointOnRay(ray, mainT2);
+        // points in cone space
+        mainPoint1 = getPointOnRay(localRay, mainT1);
+        mainPoint2 = getPointOnRay(localRay, mainT2);
 
         // check that y is within range
         main1Valid = mainT1 >= 0 &&
-            mainPoint1.y >= cone.center.y - cone.height / 2 &&
-            mainPoint1.y <= cone.center.y + cone.height / 2;
+                     mainPoint1.y >= - cone.height / 2 &&
+                     mainPoint1.y <= cone.height / 2;
 
         main2Valid = mainT2 >= 0 &&
-            mainPoint2.y >= cone.center.y - cone.height / 2 &&
-            mainPoint2.y <= cone.center.y + cone.height / 2;
+                     mainPoint2.y >= - cone.height / 2 &&
+                     mainPoint2.y <= cone.height / 2;
     }
 
     // now it's time to check the bottom surface of the cone
     // we're going to find t for the full bottom plane, y = cone.center - cone.height / 2
 
-    const bottomT = (cone.center.y - cone.height / 2 - ray.origin.y) / ray.direction.y;
-    const bottomPoint = getPointOnRay(ray, bottomT);
+    const bottomT = (- cone.height / 2 - localRay.origin.y) / localRay.direction.y;
+    const bottomPoint = getPointOnRay(localRay, bottomT);
 
     const bottomValid = bottomT >= 0 &&
-        Math.pow(bottomPoint.x - cone.center.x, 2) +
-        Math.pow(bottomPoint.z - cone.center.z, 2)
-        <= Math.pow(cone.radius, 2);
+                        Math.pow(bottomPoint.x, 2) +
+                        Math.pow(bottomPoint.z, 2)
+                        <= Math.pow(cone.radius, 2);
 
+    // don't put the local points in the hit record
     const options = [
         {
             surface: "main",
             t: mainT1,
-            point: mainPoint1,
             valid: main1Valid
         },
         {
             surface: "main",
             t: mainT2,
-            point: mainPoint2,
             valid: main2Valid
         },
         {
             surface: "bottom",
             t: bottomT,
-            point: bottomPoint,
             valid: bottomValid
         }
     ];

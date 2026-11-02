@@ -3,10 +3,12 @@
 ## Features
 
 - [x] Implement colors for diffuse materials
-- [ ] Build axes using cylinders and cones
-  - [ ] this requires first allowing cylinders and cones to be rotated
-  - [ ] that means changing the intersection and surface normal algorithms
-  - [ ] we need to be able to invert a matrix
+- [x] Build axes using cylinders and cones
+  - [x] this requires first allowing cylinders and cones to be rotated
+  - [x] that means changing the intersection and surface normal algorithms
+  - [x] we need to be able to invert a matrix
+  - [ ] also allow rotating boxes and spheres
+    - [ ] but first implement a matrix and vector class
 - [x] Implement a reflective material
 - [ ] Implement lights
 - [ ] Break up code into classes, like matrix, vector, each shape

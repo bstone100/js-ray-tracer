@@ -1,5 +1,5 @@
 import { views } from "./views.js";
-import { scene } from "./scenes/axes.js";
+import { scene } from "./scenes/primitives.js";
 
 function renderView(view, currentCanvas, params) {
     return new Promise((resolve) => {

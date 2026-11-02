@@ -42,18 +42,6 @@ function unit(vec) {
     return scale(1 / vecLength(vec), vec);
 }
 
-function writeCanvasPixel(x, y, color, canvasBuffer, canvasWidth) {
-    const offset = 4 * (canvasWidth * y + x);
-    canvasBuffer.data[offset] = color.r;
-    canvasBuffer.data[offset + 1] = color.g;
-    canvasBuffer.data[offset + 2] = color.b;
-    canvasBuffer.data[offset + 3] = color.a;
-}
-
-function updateCanvas(canvasContext, canvasBuffer) {
-    canvasContext.putImageData(canvasBuffer, 0, 0);
-}
-
 function degreesToRadians(degrees) {
     return degrees / 180 * Math.PI;
 }

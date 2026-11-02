@@ -20,6 +20,7 @@
   - [ ] I think this will require implementing triangle intersection and surface normal algorithms
 - [ ] Be able to move the camera around
   - [ ] This is probably not feasible until we switch to GPU rendering 
+  - [ ] could add simple controls for jogging the camera
 - [x] Make painting non-blocking
 - [x] Make ray tracing parallelized using web workers
   - [x] Make it so that there is only one group of web workers, whereas currently each new render is spawning a new group

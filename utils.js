@@ -79,6 +79,17 @@ function transformPoint(transform, point) {
     };
 }
 
+function transformVector(transform, vector) {
+    // zero instead of one at the end so translation isn't applied
+    const vec = [vector.x, vector.y, vector.z, 0];
+
+    return {
+        x: dotVecArrays(transform[0], vec),
+        y: dotVecArrays(transform[1], vec),
+        z: dotVecArrays(transform[2], vec)
+    };
+}
+
 function invertTransform(transform) {
     // take a 4x4 matrix and invert it
     // for now we're going to assume there is only rotation and translation, no scale or shear
@@ -96,9 +107,8 @@ function invertTransform(transform) {
         [Z[0], Z[1], Z[2], -dotVecArrays(T, Z)],
         [0, 0, 0, 1]
     ];
-
-
 }
+
 
 export function getViewportSizeFromCamera(camera) {
     return {
@@ -304,9 +314,13 @@ function shootRayAtCylinder(ray, cylinder) {
 
     const inverseCylinderTransform = invertTransform(cylinder.transform);
 
+    // this is incorrect
+    // the ray origin should be applied the inverse transform
+    // but the ray direction should only be applied the inverse rotation, not the translation
+
     const localRay = {
         origin: transformPoint(inverseCylinderTransform, ray.origin),
-        direction: transformPoint(inverseCylinderTransform, ray.direction)
+        direction: transformVector(inverseCylinderTransform, ray.direction)
     };
 
     // now let's update the following calculations given our new assumptions

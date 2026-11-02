@@ -562,15 +562,22 @@ function getSurfaceNormalAtPointOnBox(plane) {
     }
 }
 
-function getSurfaceNormalAtPointOnCylinder(cylinder, point, surface) {
+
+function getLocalSurfaceNormalAtLocalPointOnCylinder(cylinder, point, surface) {
     switch (surface) {
         case "top": return {x: 0, y: 1, z: 0};
         case "bottom": return {x: 0, y: -1, z: 0};
-        case "main": return unit({...sub(point, cylinder.center), y: 0});
+        case "main": return {x: point.x, y: 0, z: point.z};
     }
 }
 
-function getSurfaceNormalAtPointOnCone(cone, point, surface) {
+function getWorldSurfaceNormalAtWorldPointOnCylinder(cylinder, point, surface) {
+    const localPoint = transformPoint(invertTransform(cylinder.transform), point);
+    const localSurfaceNormal = getLocalSurfaceNormalAtLocalPointOnCylinder(cylinder, localPoint, surface);
+    return transformPoint(cylinder.transform, localSurfaceNormal);
+}
+
+function getLocalSurfaceNormalAtLocalPointOnCone(cone, point, surface) {
     switch (surface) {
         case "bottom": return {x: 0, y: -1, z: 0};
         case "main": {
@@ -578,24 +585,33 @@ function getSurfaceNormalAtPointOnCone(cone, point, surface) {
             // then finding the gradient vector by taking the partial derivatives of the equation
             // the gradient vector is itself the surface normal
 
-            return unit({
+            return {
                 x: point.x,
                 y: Math.pow(cone.radius, 2) / Math.pow(cone.height, 2) * (cone.height - point.y - cone.height / 2),
                 z: point.z
-            });
-
+            };
         }
     }
+}
+
+function getWorldSurfaceNormalAtWorldPointOnCone(cone, point, surface) {
+    const localPoint = transformPoint(invertTransform(cone.transform), point);
+    const localSurfaceNormal = getLocalSurfaceNormalAtLocalPointOnCone(cone, localPoint, surface);
+    return transformPoint(cone.transform, localSurfaceNormal);
 }
 
 function getSurfaceNormalAtPointOnObject(hit_record) {
     switch (hit_record.object.type) {
         case "sphere": return getSurfaceNormalAtPointOnSphere(hit_record.object, hit_record.point);
         case "box": return getSurfaceNormalAtPointOnBox(hit_record.plane);
-        case "cylinder": return getSurfaceNormalAtPointOnCylinder(hit_record.object, hit_record.point, hit_record.surface);
-        case "cone": return getSurfaceNormalAtPointOnCone(hit_record.object, hit_record.point, hit_record.surface);
+        case "cylinder": return getWorldSurfaceNormalAtWorldPointOnCylinder(hit_record.object, hit_record.point, hit_record.surface);
+        case "cone": return getWorldSurfaceNormalAtWorldPointOnCone(hit_record.object, hit_record.point, hit_record.surface);
         default: return null;
     }
+}
+
+function getUnitSurfaceNormalAtPointOnObject(hit_record) {
+    return unit(getSurfaceNormalAtPointOnObject(hit_record));
 }
 
 function makeRandomUnitVector() {
@@ -635,6 +651,13 @@ function makeBounceRayForMetalSurfaceHit(surfaceNormal, hitPoint, incomingRay) {
     };
 }
 
+function makeBounceRayForSurfaceHit(surfaceNormal, hitPoint, incomingRay, material) {
+    switch (material) {
+        case "diffuse": return makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hitPoint);
+        case "metal": return makeBounceRayForMetalSurfaceHit(surfaceNormal, hitPoint, incomingRay);
+    }
+}
+
 function surfaceNormalToColor(surfaceNormal) {
     const normalized = unit(surfaceNormal);
 
@@ -662,39 +685,20 @@ export function getColorAtRayHitPoint(ray, scene, maxBounces, bounce) {
 
     if (hit_record.object) {
 
-        if (hit_record.object.material === "diffuse") {
-            const surfaceNormal = getSurfaceNormalAtPointOnObject(hit_record);
+        const surfaceNormal = getUnitSurfaceNormalAtPointOnObject(hit_record);
 
-            // return surfaceNormalToColor(surfaceNormal);
+        // return surfaceNormalToColor(surfaceNormal);
 
-            const objectColor = hit_record.object.color;
-            const bounceRay = makeBounceRayForDiffuseSurfaceHit(surfaceNormal, hit_record.point);
-            const bounceColor = getColorAtRayHitPoint(bounceRay, scene, maxBounces, bounce + 1);
+        const objectColor = hit_record.object.color;
+        const bounceRay = makeBounceRayForSurfaceHit(surfaceNormal, hit_record.point, ray, hit_record.object.material);
+        const bounceColor = getColorAtRayHitPoint(bounceRay, scene, maxBounces, bounce + 1);
 
-            return {
-                r: objectColor.r / 255 * bounceColor.r,
-                g: objectColor.g / 255 * bounceColor.g,
-                b: objectColor.b / 255 * bounceColor.b,
-                a: 255
-            };
-        } else if (hit_record.object.material === "metal") {
-            const surfaceNormal = getSurfaceNormalAtPointOnObject(hit_record);
-
-            // return surfaceNormalToColor(surfaceNormal);
-
-            const objectColor = hit_record.object.color;
-            const bounceRay = makeBounceRayForMetalSurfaceHit(surfaceNormal, hit_record.point, ray);
-            const bounceColor = getColorAtRayHitPoint(bounceRay, scene, maxBounces, bounce + 1);
-
-            return {
-                r: objectColor.r / 255 * bounceColor.r,
-                g: objectColor.g / 255 * bounceColor.g,
-                b: objectColor.b / 255 * bounceColor.b,
-                a: 255
-            };
-        }
-
-        return hit_record.object.color;
+        return {
+            r: objectColor.r / 255 * bounceColor.r,
+            g: objectColor.g / 255 * bounceColor.g,
+            b: objectColor.b / 255 * bounceColor.b,
+            a: 255
+        };
     } else {
         // this is the background color
         return {

@@ -1,17 +1,17 @@
-
 // axes made of cylinders and cones
-// wait we can't do this yet because the cylinder intersection code doesn't handle rotation
+// should turn it into a factory to produce axis models
 export const scene = [
     {
         name: "yAxisCylinder",
         type: "cylinder",
         height: 1,
         radius: 0.01,
-        center: {
-            x: 0,
-            y: 0.5,
-            z: 0
-        },
+        transform: [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0.5],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ],
         color: {
             r: 0,
             g: 255,
@@ -25,11 +25,12 @@ export const scene = [
         type: "cone",
         height: .05,
         radius: 0.02,
-        center: {
-            x: 0,
-            y: 1.025,
-            z: 0
-        },
+        transform: [
+            [1, 0, 0, 0],
+            [0, 1, 0, 1.025],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ],
         color: {
             r: 0,
             g: 255,
@@ -37,5 +38,113 @@ export const scene = [
             a: 255
         },
         material: "diffuse"
+    },
+    {
+        name: "xAxisCylinder",
+        type: "cylinder",
+        height: 1,
+        radius: 0.01,
+        transform: [
+            [0, 1, 0, 0.5],
+            [-1, 0, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ],
+        color: {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        },
+        material: "diffuse"
+    },
+    {
+        name: "xAxisCone",
+        type: "cone",
+        height: 0.5,
+        radius: 0.02,
+        transform: [
+            [0, 1, 0, 1.025],
+            [-1, 0, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ],
+        color: {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        },
+        material: "diffuse"
+    },
+    {
+        name: "zAxisCylinder",
+        type: "cylinder",
+        height: 1,
+        radius: 0.01,
+        transform: [
+            [1, 0, 0, 0],
+            [0, 0, -1, 0],
+            [0, 1, 0, 0.5],
+            [0, 0, 0, 1]
+        ],
+        color: {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 255
+        },
+        material: "diffuse"
+    },
+    {
+        name: "zAxisCone",
+        type: "cone",
+        height: 0.05,
+        radius: 0.02,
+        transform: [
+            [1, 0, 0, 0],
+            [0, 0, -1, 0],
+            [0, 1, 0, 1.025],
+            [0, 0, 0, 1]
+        ],
+        color: {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 255
+        },
+        material: "diffuse"
     }
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

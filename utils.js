@@ -79,6 +79,27 @@ function transformPoint(transform, point) {
     };
 }
 
+function invertTransform(transform) {
+    // take a 4x4 matrix and invert it
+    // for now we're going to assume there is only rotation and translation, no scale or shear
+    // that means the transform matrix's basis vectors are orthonormal
+
+    const X = [transform[0][0], transform[1][0], transform[2][0], transform[3][0]];
+    const Y = [transform[0][1], transform[1][1], transform[2][1], transform[3][1]];
+    const Z = [transform[0][2], transform[1][2], transform[2][2], transform[3][2]];
+    const T = [transform[0][3], transform[1][3], transform[2][3], transform[3][3]];
+
+    return [
+        // x0, x1, x2, -T•X
+        [X[0], X[1], X[2], -dotVecArrays(T, X)],
+        [Y[0], Y[1], Y[2], -dotVecArrays(T, Y)],
+        [Z[0], Z[1], Z[2], -dotVecArrays(T, Z)],
+        [0, 0, 0, 1]
+    ];
+
+
+}
+
 export function getViewportSizeFromCamera(camera) {
     return {
         width: 2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2),
@@ -275,33 +296,49 @@ function shootRayAtCylinder(ray, cylinder) {
     // top
     // find intersection of ray with entire upper plane where we know y = center y + height / 2
 
-    const upperPlaneT = (cylinder.center.y + cylinder.height / 2 - ray.origin.y) / ray.direction.y;
-    const upperPlanePoint = getPointOnRay(ray, upperPlaneT);
+
+    // we are going to do the math in cylinder space
+    // that means we assume the cylinder is centered at the origin and the ray has been transformed to cylinder space
+    // so we need to apply the inverse of the cylinder's transform to the ray
+    // apply to both the ray origin and direction, I think
+
+    const inverseCylinderTransform = invertTransform(cylinder.transform);
+
+    const localRay = {
+        origin: transformPoint(inverseCylinderTransform, ray.origin),
+        direction: transformPoint(inverseCylinderTransform, ray.direction)
+    };
+
+    // now let's update the following calculations given our new assumptions
+
+
+    const upperPlaneT = (cylinder.height / 2 - localRay.origin.y) / localRay.direction.y; // local calculation
+
+    // updating this to local as well because we need to verify that the point is in the circle
+    // this point is no longer in world space, it's in cylinder local space now, so don't pass it into the hit record
+    const upperPlanePoint = getPointOnRay(localRay, upperPlaneT);
 
     // check if point is within the top circle
     const upperPointValid = upperPlaneT >= 0 &&
-        Math.pow(upperPlanePoint.x - cylinder.center.x, 2) +
-        Math.pow(upperPlanePoint.z - cylinder.center.z, 2)
+        Math.pow(upperPlanePoint.x, 2) +
+        Math.pow(upperPlanePoint.z, 2)
         <= Math.pow(cylinder.radius, 2);
 
     // now let's do the bottom surface
 
-    const lowerPlaneT = (cylinder.center.y - cylinder.height / 2 - ray.origin.y) / ray.direction.y;
-    const lowerPlanePoint = getPointOnRay(ray, lowerPlaneT);
+    const lowerPlaneT = (- cylinder.height / 2 - localRay.origin.y) / localRay.direction.y;
+    const lowerPlanePoint = getPointOnRay(localRay, lowerPlaneT);
 
     const lowerPointValid = lowerPlaneT >= 0 &&
-        Math.pow(lowerPlanePoint.x - cylinder.center.x, 2) +
-        Math.pow(lowerPlanePoint.z - cylinder.center.z, 2)
+        Math.pow(lowerPlanePoint.x, 2) +
+        Math.pow(lowerPlanePoint.z, 2)
         <= Math.pow(cylinder.radius, 2);
 
     // now time to do the main surface
-    // we need to shift the ray origin if we want to treat the cylinder as if it was aligned with the Y axis
 
-    const shiftedOrigin = sub(ray.origin, cylinder.center);
-
-    const a = Math.pow(ray.direction.x, 2) + Math.pow(ray.direction.z, 2);
-    const b = 2 * (shiftedOrigin.x * ray.direction.x + shiftedOrigin.z * ray.direction.z);
-    const c = Math.pow(shiftedOrigin.x, 2) + Math.pow(shiftedOrigin.z, 2) - Math.pow(cylinder.radius, 2);
+    const a = Math.pow(localRay.direction.x, 2) + Math.pow(localRay.direction.z, 2);
+    const b = 2 * (localRay.origin.x * localRay.direction.x + localRay.origin.z * localRay.direction.z);
+    const c = Math.pow(localRay.origin.x, 2) + Math.pow(localRay.origin.z, 2) - Math.pow(cylinder.radius, 2);
 
     const discriminant = b * b - 4 * a * c;
 
@@ -322,44 +359,42 @@ function shootRayAtCylinder(ray, cylinder) {
     let mainPoint2 = null;
 
     if (mainSurfaceT1) {
-        mainPoint1 = getPointOnRay(ray, mainSurfaceT1);
+        mainPoint1 = getPointOnRay(localRay, mainSurfaceT1);
         mainPoint1Valid = mainSurfaceT1 >= 0 &&
-            mainPoint1.y >= cylinder.center.y - cylinder.height / 2 &&
-            mainPoint1.y <= cylinder.center.y + cylinder.height / 2;
+                          mainPoint1.y >= - cylinder.height / 2 &&
+                          mainPoint1.y <= cylinder.height / 2;
     }
 
     if (mainSurfaceT2) {
-        mainPoint2 = getPointOnRay(ray, mainSurfaceT2);
+        mainPoint2 = getPointOnRay(localRay, mainSurfaceT2);
         mainPoint2Valid = mainSurfaceT2 >= 0 &&
-            mainPoint2.y >= cylinder.center.y - cylinder.height / 2 &&
-            mainPoint2.y <= cylinder.center.y + cylinder.height / 2;
+                          mainPoint2.y >= - cylinder.height / 2 &&
+                          mainPoint2.y <= cylinder.height / 2;
     }
 
     // now we have up to 4 t values, and we know if each is valid or not, we need the smallest one
+
+    // don't return these points in the hit record, they aren't useful anymore for the caller function since they are in local space
 
     const options = [
         {
             surface: "top",
             t: upperPlaneT,
-            point: upperPlanePoint,
             valid: upperPointValid
         },
         {
             surface: "bottom",
             t: lowerPlaneT,
-            point: lowerPlanePoint,
             valid: lowerPointValid
         },
         {
             surface: "main",
             t: mainSurfaceT1,
-            point: mainPoint1,
             valid: mainPoint1Valid
         },
         {
             surface: "main",
             t: mainSurfaceT2,
-            point: mainPoint2,
             valid: mainPoint2Valid
         }
     ];

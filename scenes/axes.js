@@ -61,7 +61,7 @@ export const scene = [
     {
         name: "xAxisCone",
         type: "cone",
-        height: 0.5,
+        height: 0.05,
         radius: 0.02,
         transform: [
             [0, 1, 0, 1.025],

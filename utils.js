@@ -442,7 +442,7 @@ function shootRayAtCone(ray, cone) {
 
     const localRay = {
         origin: transformPoint(inverseConeMatrix, ray.origin),
-        direction: transformPoint(inverseConeMatrix, ray.direction)
+        direction: transformVector(inverseConeMatrix, ray.direction)
     };
 
     // these constants are just for convenience

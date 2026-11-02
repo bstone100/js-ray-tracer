@@ -42,7 +42,7 @@ function unit(vec) {
     return scale(1 / vecLength(vec), vec);
 }
 
-function degreesToRadians(degrees) {
+export function degreesToRadians(degrees) {
     return degrees / 180 * Math.PI;
 }
 

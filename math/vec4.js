@@ -41,12 +41,12 @@ export class Vec4 {
         return this.times(1 / scalar);
     }
 
-    length() {
+    get length() {
         return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
     }
 
-    unit() {
-        return this.dividedBy(this.length());
+    toUnit() {
+        return this.dividedBy(this.length);
     }
 }
 

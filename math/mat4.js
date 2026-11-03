@@ -3,7 +3,7 @@ import { degreesToRadians } from "../utils.js";
 
 // column major
 export class Mat4 {
-    constructor({X, Y, Z, T, A, B, C, D, transforms, mat4, m}) {
+    constructor({X, Y, Z, T, A, B, C, D, transforms, mat4, m} = {}) {
         // start with identity matrix
         this.m = [
             [1, 0, 0, 0],
@@ -297,7 +297,7 @@ export class Mat4 {
         }
     }
 
-    toInverted() {
+    toInverse() {
         return new Mat4({
             A: new Vec4(
                 this.X.x,

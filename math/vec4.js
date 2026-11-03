@@ -6,22 +6,39 @@ export class Vec4 {
         this.w = w;
     }
 
-    plus(vec4) {
-        return new this.constructor(
-            this.x + vec4.x,
-            this.y + vec4.y,
-            this.z + vec4.z,
-            this.w
-        );
+    static randomUnitVector() {
+        return new this(Math.random(), Math.random(), Math.random(), 1).minus(0.5).toUnit();
     }
 
-    minus(vec4) {
-        return new this.constructor(
-            this.x - vec4.x,
-            this.y - vec4.y,
-            this.z - vec4.z,
-            this.w
-        );
+    plus(val) {
+        if (typeof val === "number") {
+            return new this.constructor(
+                this.x + val,
+                this.y + val,
+                this.z + val,
+                this.w
+            );
+        } else if (val instanceof Vec4) {
+            return new this.constructor(
+                this.x + val.x,
+                this.y + val.y,
+                this.z + val.z,
+                this.w
+            );
+        }
+    }
+
+    minus(val) {
+        if (typeof val === "number") {
+            return this.plus(-val);
+        } else if (val instanceof Vec4) {
+            return new this.constructor(
+                this.x - val.x,
+                this.y - val.y,
+                this.z - val.z,
+                this.w
+            );
+        }
     }
 
     dot(vec4) {
@@ -65,6 +82,10 @@ export class Vec4 {
 
     toUnit() {
         return this.dividedBy(this.length);
+    }
+
+    toFlipped() {
+        return this.times(-1);
     }
 }
 

@@ -7,7 +7,7 @@ export class Vec4 {
     }
 
     plus(vec4) {
-        return new Vec4(
+        return new this.constructor(
             this.x + vec4.x,
             this.y + vec4.y,
             this.z + vec4.z,
@@ -16,7 +16,7 @@ export class Vec4 {
     }
 
     minus(vec4) {
-        return new Vec4(
+        return new this.constructor(
             this.x - vec4.x,
             this.y - vec4.y,
             this.z - vec4.z,
@@ -28,17 +28,35 @@ export class Vec4 {
         return this.x * vec4.x + this.y * vec4.y + this.z * vec4.z + this.w * vec4.w;
     }
 
-    times(scalar) {
-        return new Vec4(
-            this.x * scalar,
-            this.y * scalar,
-            this.z * scalar,
-            this.w
-        );
+    times(multiplier) {
+        if (typeof multiplier === "number") {
+            return new this.constructor(
+                this.x * multiplier,
+                this.y * multiplier,
+                this.z * multiplier,
+                this.w
+            );
+        } else if (multiplier instanceof Vec4) {
+            return new this.constructor(
+                this.x * multiplier.x,
+                this.y * multiplier.y,
+                this.z * multiplier.z,
+                this.w
+            );
+        }
     }
 
-    dividedBy(scalar) {
-        return this.times(1 / scalar);
+    dividedBy(denominator) {
+        if (typeof denominator === "number") {
+            return this.times(1 / denominator);
+        } else if (denominator instanceof Vec4) {
+            return new this.constructor(
+                this.x / denominator.x,
+                this.y / denominator.y,
+                this.z / denominator.z,
+                this.w
+            );
+        }
     }
 
     get length() {

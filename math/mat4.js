@@ -3,7 +3,7 @@ import { degreesToRadians } from "../utils.js";
 
 // column major
 export class Mat4 {
-    constructor({X, Y, Z, T, A, B, C, D, transforms, mat4}) {
+    constructor({X, Y, Z, T, A, B, C, D, transforms, mat4, m}) {
         // start with identity matrix
         this.m = [
             [1, 0, 0, 0],
@@ -12,7 +12,17 @@ export class Mat4 {
             [0, 0, 0, 1]
         ];
 
-        // you can provide a matrix to duplicate
+        // you can provide a raw matrix to duplicate
+        if (m) {
+            this.m = [
+                [...m[0]],
+                [...m[1]],
+                [...m[2]],
+                [...m[3]]
+            ];
+        }
+
+        // you can provide a matrix instance to duplicate
         if (mat4) {
             this.X = mat4.X;
             this.Y = mat4.Y;
@@ -268,23 +278,21 @@ export class Mat4 {
         });
     }
 
-    // allow both vectors and matrixes, although that's a bit sketch in js
+    // allow both vectors and matrices
     times(multiplier) {
         if (multiplier instanceof Vec4) {
-            const vec4 = multiplier;
-            return new Vec4(
-                vec4.dot(this.A),
-                vec4.dot(this.B),
-                vec4.dot(this.C),
-                vec4.dot(this.D)
+            return new multiplier.constructor(
+                multiplier.dot(this.A),
+                multiplier.dot(this.B),
+                multiplier.dot(this.C),
+                multiplier.dot(this.D)
             );
         } else if (multiplier instanceof Mat4) {
-            const mat4 = multiplier;
             return new Mat4({
-                X: this.times(mat4.X),
-                Y: this.times(mat4.Y),
-                Z: this.times(mat4.Z),
-                T: this.times(mat4.T)
+                X: this.times(multiplier.X),
+                Y: this.times(multiplier.Y),
+                Z: this.times(multiplier.Z),
+                T: this.times(multiplier.T)
             });
         }
     }

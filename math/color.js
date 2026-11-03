@@ -9,15 +9,31 @@ export class Color extends Vec4 {
         return this.x;
     }
 
+    set r(val) {
+        this.x = val;
+    }
+
     get g() {
         return this.y;
+    }
+
+    set g(val) {
+        this.y = val;
     }
 
     get b() {
         return this.z;
     }
 
+    set b(val) {
+        this.z = val;
+    }
+
     get a() {
         return this.w;
+    }
+
+    set a(val) {
+        this.w = val;
     }
 }

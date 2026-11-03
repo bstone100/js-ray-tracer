@@ -1,5 +1,6 @@
 import { Mat4 } from "../math/mat4.js";
 import { Vec4 } from "../math/vec4.js";
+import {Color} from "../math/color.js";
 
 // axes made of cylinders and cones
 // should turn it into a factory to produce axis models
@@ -12,12 +13,7 @@ export const scene = [
         transform: new Mat4({
             T: new Vec4(0, 0.5, 0, 1)
         }),
-        color: {
-            r: 0,
-            g: 255,
-            b: 0,
-            a: 255
-        },
+        color: new Color(0, 255, 0, 255),
         material: "diffuse"
     },
     {
@@ -28,12 +24,7 @@ export const scene = [
         transform: new Mat4({
             T: new Vec4(0, 1.025, 0, 1)
         }),
-        color: {
-            r: 0,
-            g: 255,
-            b: 0,
-            a: 255
-        },
+        color: new Color(0, 255, 0, 255),
         material: "diffuse"
     },
     {
@@ -58,12 +49,7 @@ export const scene = [
                 }
             ]
         }),
-        color: {
-            r: 255,
-            g: 0,
-            b: 0,
-            a: 255
-        },
+        color: new Color(255, 0, 0, 255),
         material: "diffuse"
     },
     {
@@ -88,12 +74,7 @@ export const scene = [
                 }
             ]
         }),
-        color: {
-            r: 255,
-            g: 0,
-            b: 0,
-            a: 255
-        },
+        color: new Color(255, 0, 0, 255),
         material: "diffuse"
     },
     {
@@ -118,12 +99,7 @@ export const scene = [
                 }
             ]
         }),
-        color: {
-            r: 0,
-            g: 0,
-            b: 255,
-            a: 255
-        },
+        color: new Color(0, 0, 255, 255),
         material: "diffuse"
     },
     {
@@ -148,12 +124,7 @@ export const scene = [
                 }
             ]
         }),
-        color: {
-            r: 0,
-            g: 0,
-            b: 255,
-            a: 255
-        },
+        color: new Color(0, 0, 255, 255),
         material: "diffuse"
     }
 ];

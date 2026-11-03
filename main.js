@@ -1,5 +1,7 @@
 import { views } from "./views.js";
 import { scene } from "./scenes/primitives.js";
+import { Point2 } from "./math/point2.js";
+import { Size2 } from "./math/size2.js";
 
 function renderView(view, currentCanvas, params) {
     return new Promise((resolve) => {
@@ -12,37 +14,26 @@ function renderView(view, currentCanvas, params) {
             workerPoolSize
         } = params;
 
-        const canvasWidthPixels = canvasSize.width;
-        const canvasHeightPixels = canvasSize.height;
-
         const newCanvas = document.createElement("canvas");
 
-        newCanvas.width = canvasWidthPixels;
-        newCanvas.height = canvasHeightPixels;
+        newCanvas.width = canvasSize.width;
+        newCanvas.height = canvasSize.height;
 
         const newContext = newCanvas.getContext("2d");
 
         // this takes a snapshot of the old canvas, and then scales it to fit the new canvas
-        newContext.drawImage(currentCanvas, 0, 0, canvasWidthPixels, canvasHeightPixels);
+        newContext.drawImage(currentCanvas, 0, 0, canvasSize.width, canvasSize.height);
 
         currentCanvas.replaceWith(newCanvas);
 
-        const tileWidthPixels = tileSize.width;
-        const tileHeightPixels = tileSize.height;
-
-        // assume for now these are divisible
-        const canvasWidthTiles = canvasWidthPixels / tileWidthPixels;
-        const canvasHeightTiles = canvasHeightPixels / tileHeightPixels;
+        const canvasSizeTiles = new Size2(canvasSize.width / tileSize.width, canvasSize.height / tileSize.height);
 
         // the x and y are in "tile" space
-        let currentTile = {
-            x: 0,
-            y: 0
-        };
+        let currentTile = new Point2();
 
         // let's assume for now that canvasWidth is divisible by tileWidth and canvasHeight is divisible by tileHeight
         function incrementCurrentTile() {
-            if (currentTile.x < canvasWidthTiles - 1) {
+            if (currentTile.x < canvasSizeTiles.width - 1) {
                 currentTile.x++;
             } else {
                 currentTile.y++;
@@ -51,27 +42,21 @@ function renderView(view, currentCanvas, params) {
         }
 
         function isCurrentTileValid() {
-            return currentTile.x < canvasWidthTiles && currentTile.y < canvasHeightTiles;
+            return currentTile.x < canvasSizeTiles.width && currentTile.y < canvasSizeTiles.height;
         }
 
         function assignWork(worker) {
             if (isCurrentTileValid()) {
 
+                // I want to use classes but postMessage strips classes into simple objects
                 worker.postMessage({
                     type: "processTile",
                     // in canvas space
-                    topLeft: {
-                        x: currentTile.x * tileWidthPixels,
-                        y: currentTile.y * tileHeightPixels
-                    },
-                    width: tileWidthPixels,
-                    height: tileHeightPixels,
+                    topLeft: new Point2(currentTile.x * tileSize.width, currentTile.y * tileSize.height),
+                    tileSize,
+                    canvasSize,
                     samplesPerPixel,
                     maxBounces,
-                    canvasSize: {
-                        width: canvasWidthPixels,
-                        height: canvasHeightPixels
-                    },
                     camera: view.camera,
                     scene
                 });
@@ -198,19 +183,11 @@ for (const viewDiv of viewDivs) {
         // since we're replacing the old one every time
         const currentCanvas = viewDiv.querySelector("canvas");
 
-        // for clarity I want all size objects to have a width and height property
-        // likewise I want all pos objects to have an x and y property
         const currentParams = getCurrentParams();
         const params = {
             ...currentParams,
-            canvasSize: {
-                width: currentParams.canvasSize,
-                height: currentParams.canvasSize
-            },
-            tileSize: {
-                width: currentParams.tileSize,
-                height: currentParams.tileSize
-            }
+            canvasSize: new Size2(currentParams.canvasSize, currentParams.canvasSize),
+            tileSize: new Size2(currentParams.tileSize, currentParams.tileSize)
         };
 
         const duration = await renderView(view, currentCanvas, params);

@@ -2,106 +2,17 @@ import { Mat4 } from "./math/mat4.js";
 import { Vec4 } from "./math/vec4.js";
 import { Point2 } from "./math/point2.js";
 import { Size2 } from "./math/size2.js"
+import {Vec3} from "./math/vec3.js";
+import {Point3} from "./math/point3.js";
+import {Color} from "./math/color.js";
 
 export function randomColor() {
-    return {
-        r: Math.random() * 255,
-        g: Math.random() * 255,
-        b: Math.random() * 255
-    };
-}
-
-function dot(vec1, vec2) {
-    return (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z);
-}
-
-function sub(vec1, vec2) {
-    return {
-        x: vec1.x - vec2.x,
-        y: vec1.y - vec2.y,
-        z: vec1.z - vec2.z
-    };
-}
-
-function add(vec1, vec2) {
-    return {
-        x: vec1.x + vec2.x,
-        y: vec1.y + vec2.y,
-        z: vec1.z + vec2.z
-    };
-}
-
-function scale(scalar, vec) {
-    return {
-        x: scalar * vec.x,
-        y: scalar * vec.y,
-        z: scalar * vec.z
-    };
-}
-
-function vecLength(vec) {
-    return Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.y, 2) + Math.pow(vec.z, 2));
-}
-
-function unit(vec) {
-    return scale(1 / vecLength(vec), vec);
+    return new Color(Math.random() * 255, Math.random() * 255, Math.random() * 255, 255);
 }
 
 export function degreesToRadians(degrees) {
     return degrees / 180 * Math.PI;
 }
-
-function dotVecArrays(vec1, vec2) {
-    let ret = 0;
-    for (let i = 0; i < vec1.length; i++) {
-        ret += vec1[i] * vec2[i];
-    }
-    return ret;
-}
-
-function transformPoint(transform, point) {
-    // transform is 4x4 matrix, point is object with x, y, z
-    // we'll return a point in the same form as the param
-
-    const vec = [point.x, point.y, point.z, 1];
-
-    return {
-        x: dotVecArrays(transform[0], vec),
-        y: dotVecArrays(transform[1], vec),
-        z: dotVecArrays(transform[2], vec)
-    };
-}
-
-function transformVector(transform, vector) {
-    // zero instead of one at the end so translation isn't applied
-    const vec = [vector.x, vector.y, vector.z, 0];
-
-    return {
-        x: dotVecArrays(transform[0], vec),
-        y: dotVecArrays(transform[1], vec),
-        z: dotVecArrays(transform[2], vec)
-    };
-}
-
-function invertTransform(transform) {
-    // take a 4x4 matrix and invert it
-    // for now we're going to assume there is only rotation and translation, no scale or shear
-    // that means the transform matrix's basis vectors are orthonormal
-
-    const X = [transform[0][0], transform[1][0], transform[2][0], transform[3][0]];
-    const Y = [transform[0][1], transform[1][1], transform[2][1], transform[3][1]];
-    const Z = [transform[0][2], transform[1][2], transform[2][2], transform[3][2]];
-    const T = [transform[0][3], transform[1][3], transform[2][3], transform[3][3]];
-
-    return [
-        // x0, x1, x2, -T•X
-        [X[0], X[1], X[2], -dotVecArrays(T, X)],
-        [Y[0], Y[1], Y[2], -dotVecArrays(T, Y)],
-        [Z[0], Z[1], Z[2], -dotVecArrays(T, Z)],
-        [0, 0, 0, 1]
-    ];
-}
-
 
 export function getViewportSizeFromCamera(camera) {
     return new Size2(
@@ -110,60 +21,51 @@ export function getViewportSizeFromCamera(camera) {
     );
 }
 
-function canvasSpace2DToViewportSpace2D(posCanvas, canvas, viewport) {
+function canvasToViewport(canvasPoint, canvasSize, viewportSize) {
     return new Point2(
-        posCanvas.x * (viewport.width / canvas.width),
-        posCanvas.y * (viewport.height / canvas.height)
+        canvasPoint.x * (viewportSize.width / canvasSize.width),
+        canvasPoint.y * (viewportSize.height / canvasSize.height)
     );
 }
 
-function viewportSpace2DToCameraSpace3D(posViewport, viewport, camera) {
-    // return {
-    //     x: posViewport.x - viewport.width / 2,
-    //     y: -posViewport.y + viewport.height / 2,
-    //     z: camera.focalLength
-    // };
-    return new Vec4(
-        posViewport.x - viewport.width / 2,
-        -posViewport.y + viewport.height / 2,
-        camera.focalLength,
-
+function viewportToCamera(viewportPoint, viewportSize, camera) {
+    return new Point3(
+        viewportPoint.x - viewportSize.width / 2,
+        -viewportPoint.y + viewportSize.height / 2,
+        camera.focalLength
     );
 }
 
-function cameraSpace3DToWorldSpace3D(posCamera, camera) {
-    // return transformPoint(camera.transform, posCamera);
-
-    return camera.transform.times(posCamera);
-
+function cameraToWorld(cameraPoint, camera) {
+    return camera.transform.times(cameraPoint);
 }
 
-function canvasSpaceToWorldSpace(posCanvas, canvas, viewport, camera) {
-    const posViewport = canvasSpace2DToViewportSpace2D(posCanvas, canvas, viewport);
-    const posCamera = viewportSpace2DToCameraSpace3D(posViewport, viewport, camera);
-    return cameraSpace3DToWorldSpace3D(posCamera, camera);
+function canvasSpaceToWorldSpace(canvasPoint, canvasSize, viewportSize, camera) {
+    const viewportPoint = canvasToViewport(canvasPoint, canvasSize, viewportSize);
+    const cameraPoint = viewportToCamera(viewportPoint, viewportSize, camera);
+    return cameraToWorld(cameraPoint, camera);
 }
 
-function canvasPixelCenter(posCanvas) {
-    return {
-        x: posCanvas.x + 0.5,
-        y: posCanvas.y + 0.5
-    }
+function canvasPixelCenter(canvasPoint) {
+    return new Point2(
+        canvasPoint.x + 0.5,
+        canvasPoint.y + 0.5
+    );
 }
 
-function randomLocationInsideCanvasPixel(posCanvas) {
-    return {
-        x: posCanvas.x + Math.random(),
-        y: posCanvas.y + Math.random()
-    };
+function randomLocationInsideCanvasPixel(canvasPoint) {
+    return new Point2(
+        canvasPoint.x + Math.random(),
+        canvasPoint.y + Math.random()
+    );
 }
 
-function canvasPixelCenterToWorldSpace(posCanvas, canvas, viewport, camera) {
-    return canvasSpaceToWorldSpace(canvasPixelCenter(posCanvas), canvas, viewport, camera);
+function canvasPixelCenterToWorldSpace(canvasPoint, canvasSize, viewportSize, camera) {
+    return canvasSpaceToWorldSpace(canvasPixelCenter(canvasPoint), canvasSize, viewportSize, camera);
 }
 
-export function randomLocationInsideCanvasPixelToWorldSpace(posCanvas, canvas, viewport, camera) {
-    return canvasSpaceToWorldSpace(randomLocationInsideCanvasPixel(posCanvas), canvas, viewport, camera);
+export function randomLocationInsideCanvasPixelToWorldSpace(canvasPoint, canvasSize, viewportSize, camera) {
+    return canvasSpaceToWorldSpace(randomLocationInsideCanvasPixel(canvasPoint), canvasSize, viewportSize, camera);
 }
 
 // return a hit record object
@@ -558,10 +460,6 @@ function shootRayAtObjects(ray, objects) {
     return closest_hit_record;
 }
 
-function getPointOnRay(ray, t) {
-    return add(ray.origin, scale(t, ray.direction));
-}
-
 function getSurfaceNormalAtPointOnSphere(sphere, point) {
     return unit(sub(point, sphere.center));
 }
@@ -689,12 +587,7 @@ function surfaceNormalToColor(surfaceNormal) {
 export function getColorAtRayHitPoint(ray, scene, maxBounces, bounce) {
 
     if (bounce === maxBounces) {
-        return {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255
-        };
+        return new Color(0, 0, 0, 255);
     }
 
     const hit_record = shootRayAtObjects(ray, scene);
@@ -709,19 +602,9 @@ export function getColorAtRayHitPoint(ray, scene, maxBounces, bounce) {
         const bounceRay = makeBounceRayForSurfaceHit(surfaceNormal, hit_record.point, ray, hit_record.object.material);
         const bounceColor = getColorAtRayHitPoint(bounceRay, scene, maxBounces, bounce + 1);
 
-        return {
-            r: objectColor.r / 255 * bounceColor.r,
-            g: objectColor.g / 255 * bounceColor.g,
-            b: objectColor.b / 255 * bounceColor.b,
-            a: 255
-        };
+        return objectColor.dividedBy(255).times(bounceColor);
     } else {
         // this is the background color
-        return {
-            r: 255 * 0.7,
-            g: 255 * 0.8,
-            b: 255,
-            a: 255
-        };
+        return new Color(255 * 0.7, 255 * 0.8, 255, 255);
     }
 }

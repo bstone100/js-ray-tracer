@@ -173,40 +173,75 @@ export class Mat4 {
         this.T = this.T.plus(vec4);
     }
 
-    static translate(mat4, vec4) {
-
-    }
-
     // "rotate 90 degrees clockwise about the Y axis"
     // "rotate 45 degrees counterclockwise about the Z axis"
-    // we need matrix multiplication for this
-    rotate(angle, unit, direction, axis) {
-        // I'm going to derive this step by step
+    // the purpose of this function is to be able to write rotation operations naturally
 
-        let angleRadians;
+    // unit is degrees or radians
+    // direction is clockwise or counterclockwise
+    // axis is X, Y, or Z
 
-        if (unit === "degrees") {
-            angleRadians = degreesToRadians(angle);
-        } else if (unit === "radians") {
-            angleRadians = angle;
-        }
-
+    static getRotationMatrix(angle, unit, direction, axis) {
+        const angleRadians = unit === "degrees" ? degreesToRadians(angle) : angle;
         if (axis.toUpperCase() === "Z") {
-
-            // up vector will be a unit vector until we add support for scaling
-
-            const currentAngleOfUpVector = Math.acos(this.up.x);
-
-            let newAngleOfUpVector;
-
-            if (direction === "clockwise") {
-                newAngleOfUpVector = currentAngleOfUpVector + angleRadians;
-            } else if (direction === "counterclockwise") {
-                newAngleOfUpVector = currentAngleOfUpVector - angleRadians;
-            }
-
-
+            const angleDirected = direction === "counterclockwise" ? -angleRadians : angleRadians;
+            const xAngle = angleDirected;
+            const yAngle = Math.PI / 2 + angleDirected;
+            return new Mat4({
+                X: new Vec4(
+                    Math.cos(xAngle),
+                    Math.sin(xAngle),
+                    0,
+                    0
+                ),
+                Y: new Vec4(
+                    Math.cos(yAngle),
+                    Math.sin(yAngle),
+                    0,
+                    0
+                )
+            });
+        } else if (axis.toUpperCase() === "Y") {
+            const angleDirected = direction === "clockwise" ? -angleRadians : angleRadians;
+            const xAngle = angleDirected;
+            const zAngle = Math.PI / 2 + angleDirected
+            return new Mat4({
+                X: new Vec4(
+                    Math.cos(xAngle),
+                    0,
+                    Math.sin(xAngle),
+                    0
+                ),
+                Z: new Vec4(
+                    Math.cos(zAngle),
+                    0,
+                    Math.sin(zAngle),
+                    0
+                )
+            });
+        } else if (axis.toUpperCase() === "X") {
+            const angleDirected = direction === "clockwise" ? -angleRadians : angleRadians;
+            const zAngle = angleDirected;
+            const yAngle = Math.PI / 2 + angleDirected;
+            return new Mat4({
+                Y: new Vec4(
+                    0,
+                    Math.sin(yAngle),
+                    Math.cos(yAngle),
+                    0
+                ),
+                Z: new Vec4(
+                    0,
+                    Math.sin(zAngle),
+                    Math.cos(zAngle),
+                    0
+                )
+            });
         }
+    }
+
+    rotate(angle, unit, direction, axis) {
+        this.m = this.times(Mat4.getRotationMatrix(angle, unit, direction, axis)).m;
     }
 
     // allow both vectors and matrixes, although that's a bit sketch in js

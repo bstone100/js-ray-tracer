@@ -1,3 +1,8 @@
+import { Mat4 } from "./math/mat4.js";
+import { Vec4 } from "./math/vec4.js";
+import { Point2 } from "./math/point2.js";
+import { Size2 } from "./math/size2.js"
+
 export function randomColor() {
     return {
         r: Math.random() * 255,
@@ -99,29 +104,38 @@ function invertTransform(transform) {
 
 
 export function getViewportSizeFromCamera(camera) {
-    return {
-        width: 2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2),
-        height: 2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2)
-    };
+    return new Size2(
+        2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2),
+        2 * camera.focalLength * Math.tan(degreesToRadians(camera.fieldOfView) / 2)
+    );
 }
 
 function canvasSpace2DToViewportSpace2D(posCanvas, canvas, viewport) {
-    return {
-        x: posCanvas.x * (viewport.width / canvas.width),
-        y: posCanvas.y * (viewport.height / canvas.height)
-    };
+    return new Point2(
+        posCanvas.x * (viewport.width / canvas.width),
+        posCanvas.y * (viewport.height / canvas.height)
+    );
 }
 
 function viewportSpace2DToCameraSpace3D(posViewport, viewport, camera) {
-    return {
-        x: posViewport.x - viewport.width / 2,
-        y: -posViewport.y + viewport.height / 2,
-        z: camera.focalLength
-    };
+    // return {
+    //     x: posViewport.x - viewport.width / 2,
+    //     y: -posViewport.y + viewport.height / 2,
+    //     z: camera.focalLength
+    // };
+    return new Vec4(
+        posViewport.x - viewport.width / 2,
+        -posViewport.y + viewport.height / 2,
+        camera.focalLength,
+
+    );
 }
 
 function cameraSpace3DToWorldSpace3D(posCamera, camera) {
-    return transformPoint(camera.transform, posCamera);
+    // return transformPoint(camera.transform, posCamera);
+
+    return camera.transform.times(posCamera);
+
 }
 
 function canvasSpaceToWorldSpace(posCanvas, canvas, viewport, camera) {

@@ -1,3 +1,6 @@
+import { Mat4 } from "../math/mat4.js";
+import { Vec4 } from "../math/vec4.js";
+
 // axes made of cylinders and cones
 // should turn it into a factory to produce axis models
 export const scene = [
@@ -6,12 +9,9 @@ export const scene = [
         type: "cylinder",
         height: 1,
         radius: 0.01,
-        transform: [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0.5],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            T: new Vec4(0, 0.5, 0, 1)
+        }),
         color: {
             r: 0,
             g: 255,
@@ -25,12 +25,9 @@ export const scene = [
         type: "cone",
         height: .05,
         radius: 0.02,
-        transform: [
-            [1, 0, 0, 0],
-            [0, 1, 0, 1.025],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            T: new Vec4(0, 1.025, 0, 1)
+        }),
         color: {
             r: 0,
             g: 255,
@@ -44,12 +41,23 @@ export const scene = [
         type: "cylinder",
         height: 1,
         radius: 0.01,
-        transform: [
-            [0, 1, 0, 0.5],
-            [-1, 0, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            transforms: [
+                {
+                    operation: "rotate",
+                    angle: 90,
+                    unit: "degrees",
+                    direction: "counterclockwise",
+                    axis: "Z"
+                },
+                {
+                    operation: "translate",
+                    x: 0.5,
+                    y: 0,
+                    z: 0
+                }
+            ]
+        }),
         color: {
             r: 255,
             g: 0,
@@ -63,12 +71,23 @@ export const scene = [
         type: "cone",
         height: 0.05,
         radius: 0.02,
-        transform: [
-            [0, 1, 0, 1.025],
-            [-1, 0, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            transforms: [
+                {
+                    operation: "rotate",
+                    angle: 90,
+                    unit: "degrees",
+                    direction: "counterclockwise",
+                    axis: "Z"
+                },
+                {
+                    operation: "translate",
+                    x: 1.025,
+                    y: 0,
+                    z: 0
+                }
+            ]
+        }),
         color: {
             r: 255,
             g: 0,
@@ -82,12 +101,23 @@ export const scene = [
         type: "cylinder",
         height: 1,
         radius: 0.01,
-        transform: [
-            [1, 0, 0, 0],
-            [0, 0, -1, 0],
-            [0, 1, 0, 0.5],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            transforms: [
+                {
+                    operation: "rotate",
+                    angle: 90,
+                    unit: "degrees",
+                    direction: "clockwise",
+                    axis: "X"
+                },
+                {
+                    operation: "translate",
+                    x: 0,
+                    y: 0,
+                    z: 0.5
+                }
+            ]
+        }),
         color: {
             r: 0,
             g: 0,
@@ -101,12 +131,23 @@ export const scene = [
         type: "cone",
         height: 0.05,
         radius: 0.02,
-        transform: [
-            [1, 0, 0, 0],
-            [0, 0, -1, 0],
-            [0, 1, 0, 1.025],
-            [0, 0, 0, 1]
-        ],
+        transform: new Mat4({
+            transforms: [
+                {
+                    operation: "rotate",
+                    angle: 90,
+                    unit: "degrees",
+                    direction: "clockwise",
+                    axis: "X"
+                },
+                {
+                    operation: "translate",
+                    x: 0,
+                    y: 0,
+                    z: 1.025
+                }
+            ]
+        }),
         color: {
             r: 0,
             g: 0,

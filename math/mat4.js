@@ -3,7 +3,7 @@ import { degreesToRadians } from "../utils.js";
 
 // column major
 export class Mat4 {
-    constructor({X, Y, Z, T, A, B, C, D}) {
+    constructor({X, Y, Z, T, A, B, C, D, transforms, mat4}) {
         // start with identity matrix
         this.m = [
             [1, 0, 0, 0],
@@ -11,6 +11,25 @@ export class Mat4 {
             [0, 0, 1, 0],
             [0, 0, 0, 1]
         ];
+
+        // you can provide a matrix to duplicate
+        if (mat4) {
+            this.X = mat4.X;
+            this.Y = mat4.Y;
+            this.Z = mat4.Z;
+            this.T = mat4.T;
+        }
+
+        // you can provide a list of operations to be performed in order on the matrix
+        if (transforms) {
+            for (const t of transforms) {
+                if (t.operation === "rotate") {
+                    this.rotate(t.angle, t.unit, t.direction, t.axis);
+                } else if (t.operation === "translate") {
+                    this.translate(new Vec4(t.x, t.y, t.z, 0));
+                }
+            }
+        }
 
         // X, Y, Z, T are columns
         // A, B, C, D are rows
@@ -173,13 +192,9 @@ export class Mat4 {
         this.T = this.T.plus(vec4);
     }
 
-    // "rotate 90 degrees clockwise about the Y axis"
-    // "rotate 45 degrees counterclockwise about the Z axis"
-    // the purpose of this function is to be able to write rotation operations naturally
-
-    // unit is degrees or radians
-    // direction is clockwise or counterclockwise
-    // axis is X, Y, or Z
+    get translation() {
+        return this.T;
+    }
 
     static getRotationMatrix(angle, unit, direction, axis) {
         const angleRadians = unit === "degrees" ? degreesToRadians(angle) : angle;
@@ -244,6 +259,15 @@ export class Mat4 {
         this.m = this.times(Mat4.getRotationMatrix(angle, unit, direction, axis)).m;
     }
 
+    get rotation() {
+        // return this matrix with translation removed
+        return new Mat4({
+            X: this.X,
+            Y: this.Y,
+            Z: this.Z
+        });
+    }
+
     // allow both vectors and matrixes, although that's a bit sketch in js
     times(multiplier) {
         if (multiplier instanceof Vec4) {
@@ -263,6 +287,29 @@ export class Mat4 {
                 T: this.times(mat4.T)
             });
         }
+    }
+
+    toInverted() {
+        return new Mat4({
+            A: new Vec4(
+                this.X.x,
+                this.X.y,
+                this.X.z,
+                -this.T.dot(this.X)
+            ),
+            B: new Vec4(
+                this.Y.x,
+                this.Y.y,
+                this.Y.z,
+                -this.T.dot(this.Y)
+            ),
+            C: new Vec4(
+                this.Z.x,
+                this.Z.y,
+                this.Z.z,
+                -this.T.dot(this.Z)
+            )
+        });
     }
 }
 

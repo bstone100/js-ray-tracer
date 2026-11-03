@@ -1,22 +1,35 @@
-const root2over2 = Math.sqrt(2) / 2;
-const root3over3 = Math.sqrt(3) / 3;
+import { Mat4 } from "./math/mat4.js";
+import { Vec4 } from "./math/vec4.js";
 
 export const views = [
     // {
     //     name: "positive",
     //     id: "positive-view",
     //     camera: {
-    //         center: {
-    //             x: 2,
-    //             y: 2,
-    //             z: 2
-    //         },
-    //         transform: [
-    //             [-root2over2, -root3over3, -root3over3, 2],
-    //             [0, root3over3, -root3over3, 2],
-    //             [root2over2, -root3over3, -root3over3, 2],
-    //             [0, 0, 0, 1]
-    //         ]
+    //         transform: new Mat4({
+    //             transforms: [
+    //                 {
+    //                     operation: "rotate",
+    //                     angle: 135,
+    //                     unit: "degrees",
+    //                     direction: "counterclockwise",
+    //                     axis: "Y"
+    //                 },
+    //                 {
+    //                     operation: "rotate",
+    //                     angle: 45,
+    //                     unit: "degrees",
+    //                     direction: "clockwise",
+    //                     axis: "X"
+    //                 },
+    //                 {
+    //                     operation: "translate",
+    //                     x: 1.5,
+    //                     y: 1.5,
+    //                     z: 1.5
+    //                 }
+    //             ]
+    //         })
     //     },
     //     focalLength: 2.0,
     //     fieldOfView: 60.0
@@ -25,22 +38,9 @@ export const views = [
         name: "front",
         id: "front-view",
         camera: {
-            center: {
-                x: 0,
-                y: 0,
-                z: -1
-            },
-            direction: {
-                x: 0,
-                y: 0,
-                z: 1
-            },
-            transform: [
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, -1],
-                [0, 0, 0, 1]
-            ],
+            transform: new Mat4({
+                T: new Vec4(0, 0, -1, 1)
+            }),
             focalLength: 2.0,
             fieldOfView: 60.0
         }
@@ -49,22 +49,23 @@ export const views = [
         name: "right",
         id: "right-view",
         camera: {
-            center: {
-                x: 1,
-                y: 0,
-                z: 0
-            },
-            direction: {
-                x: -1,
-                y: 0,
-                z: 0
-            },
-            transform: [
-                [0, 0, -1, 1],
-                [0, 1, 0, 0],
-                [1, 0, 0, 0],
-                [0, 0, 0, 1]
-            ],
+            transform: new Mat4({
+                transforms: [
+                    {
+                        operation: "rotate",
+                        angle: 90,
+                        unit: "degrees",
+                        direction: "counterclockwise",
+                        axis: "Y"
+                    },
+                    {
+                        operation: "translate",
+                        x: 1,
+                        y: 0,
+                        z: 0
+                    }
+                ]
+            }),
             focalLength: 2.0,
             fieldOfView: 60.0
         }
@@ -73,24 +74,39 @@ export const views = [
         name: "top",
         id: "top-view",
         camera: {
-            center: {
-                x: 0,
-                y: 1,
-                z: 0
-            },
-            direction: {
-                x: 0,
-                y: -1,
-                z: 0
-            },
-            transform: [
-                [1, 0, 0, 0],
-                [0, 0, -1, 1],
-                [0, 1, 0, 0],
-                [0, 0, 0, 1]
-            ],
+            transform: new Mat4({
+                transforms: [
+                    {
+                        operation: "rotate",
+                        angle: 90,
+                        unit: "degrees",
+                        direction: "clockwise",
+                        axis: "X"
+                    },
+                    {
+                        operation: "translate",
+                        x: 0,
+                        y: 1,
+                        z: 0
+                    }
+                ]
+            }),
             focalLength: 2.0,
             fieldOfView: 60.0
         }
     }
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+

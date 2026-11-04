@@ -7,7 +7,7 @@ import {Point3} from "./math/point3.js";
 import {Color} from "./math/color.js";
 
 export function randomColor() {
-    return new Color(Math.random() * 255, Math.random() * 255, Math.random() * 255, 255);
+    return new Color(Math.random(), Math.random(), Math.random(), 255).times(255);
 }
 
 export function degreesToRadians(degrees) {
@@ -99,7 +99,6 @@ function surfaceNormalToColor(surfaceNormal) {
 
 // we need to make this function recursive and follow the ray to where it bounces
 export function getColorAtRayHitPoint(ray, scene, maxBounces, bounce) {
-
     if (bounce === maxBounces) {
         return new Color(0, 0, 0, 255);
     }

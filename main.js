@@ -1,9 +1,7 @@
-import { views } from "./views.js";
-import { scene } from "./scenes/primitives.js";
 import { Point2 } from "./math/point2.js";
 import { Size2 } from "./math/size2.js";
 
-function renderView(view, currentCanvas, params) {
+function renderView(cameraId, currentCanvas, params) {
     return new Promise((resolve) => {
 
         const {
@@ -11,7 +9,8 @@ function renderView(view, currentCanvas, params) {
             samplesPerPixel,
             maxBounces,
             tileSize,
-            workerPoolSize
+            workerPoolSize,
+            sceneId
         } = params;
 
         const newCanvas = document.createElement("canvas");
@@ -51,14 +50,13 @@ function renderView(view, currentCanvas, params) {
                 // I want to use classes but postMessage strips classes into simple objects
                 worker.postMessage({
                     type: "processTile",
-                    // in canvas space
+                    cameraId,
                     topLeft: new Point2(currentTile.x * tileSize.width, currentTile.y * tileSize.height),
                     tileSize,
                     canvasSize,
                     samplesPerPixel,
                     maxBounces,
-                    camera: view.camera,
-                    scene
+                    sceneId
                 });
 
                 incrementCurrentTile();
@@ -123,28 +121,29 @@ function renderView(view, currentCanvas, params) {
 }
 
 const params = [
-    "canvasSize",
-    "samplesPerPixel",
-    "maxBounces",
-    "tileSize",
-    "workerPoolSize"
+    {key: "canvasSize", type: "number"},
+    {key: "samplesPerPixel", type: "number"},
+    {key: "maxBounces", type: "number"},
+    {key: "tileSize", type: "number"},
+    {key: "workerPoolSize", type: "number"},
+    {key: "sceneId", type: "string"}
 ];
 
 // save values to local storage when they change
 for (const param of params) {
-    const selectElement = document.getElementById(param);
+    const selectElement = document.getElementById(param.key);
 
     selectElement.addEventListener("change", () => {
-        localStorage.setItem(param, selectElement.value);
+        localStorage.setItem(param.key, selectElement.value);
     });
 }
 
 // load values from local storage and set the active option in the select
 function loadParams() {
     for (const param of params) {
-        const value = localStorage.getItem(param);
+        const value = localStorage.getItem(param.key);
         if (value) {
-            const selectElement = document.getElementById(param);
+            const selectElement = document.getElementById(param.key);
             selectElement.value = value;
         }
     }
@@ -155,8 +154,12 @@ function getCurrentParams() {
     const obj = {};
 
     for (const param of params) {
-        const selectElement = document.getElementById(param);
-        obj[param] = Number.parseInt(selectElement.value, 10);
+        const selectElement = document.getElementById(param.key);
+        if (param.type === "number") {
+            obj[param.key] = Number.parseInt(selectElement.value, 10);
+        } else if (param.type === "string") {
+            obj[param.key] = selectElement.value;
+        }
     }
 
     return obj;
@@ -164,14 +167,14 @@ function getCurrentParams() {
 
 loadParams();
 
-const viewDivs = document.querySelectorAll(".view");
+const cameraDivs = document.querySelectorAll(".camera");
 
-for (const viewDiv of viewDivs) {
-    const renderButton = viewDiv.querySelector(".renderButton");
-    const initialCanvas = viewDiv.querySelector("canvas");
-    const durationElement = viewDiv.querySelector(".duration");
+for (const cameraDiv of cameraDivs) {
+    const renderButton = cameraDiv.querySelector(".renderButton");
+    const initialCanvas = cameraDiv.querySelector("canvas");
+    const durationElement = cameraDiv.querySelector(".duration");
 
-    const view = views.find((view) => view.id === viewDiv.dataset.viewId);
+    const cameraId = cameraDiv.dataset.cameraId;
 
     // set the initial canvas size
     const initialParams = getCurrentParams();
@@ -181,7 +184,7 @@ for (const viewDiv of viewDivs) {
     renderButton.addEventListener("click", async () => {
 
         // since we're replacing the old one every time
-        const currentCanvas = viewDiv.querySelector("canvas");
+        const currentCanvas = cameraDiv.querySelector("canvas");
 
         const currentParams = getCurrentParams();
         const params = {
@@ -190,7 +193,7 @@ for (const viewDiv of viewDivs) {
             tileSize: new Size2(currentParams.tileSize, currentParams.tileSize)
         };
 
-        const duration = await renderView(view, currentCanvas, params);
+        const duration = await renderView(cameraId, currentCanvas, params);
         durationElement.textContent = (duration / 1000).toFixed(2);
     });
 }

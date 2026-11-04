@@ -1,37 +1,37 @@
 import { Mat4 } from "../math/mat4.js";
 import { Vec4 } from "../math/vec4.js";
 import {Color} from "../math/color.js";
+import {Cylinder} from "../shapes/cylinder.js";
+import {Lambertian} from "../materials/lambertian.js";
+import {Cone} from "../shapes/cone.js";
 
 // axes made of cylinders and cones
 // should turn it into a factory to produce axis models
 export const scene = [
-    {
+    new Cylinder({
         name: "yAxisCylinder",
-        type: "cylinder",
-        height: 1,
-        radius: 0.01,
         transform: new Mat4({
             T: new Vec4(0, 0.5, 0, 1)
         }),
-        color: new Color(0, 255, 0, 255),
-        material: "diffuse"
-    },
-    {
+        material: new Lambertian({
+            color: new Color(0, 255, 0, 255)
+        }),
+        radius: 0.01,
+        height: 1
+    }),
+    new Cone({
         name: "yAxisCone",
-        type: "cone",
-        height: .05,
-        radius: 0.02,
         transform: new Mat4({
             T: new Vec4(0, 1.025, 0, 1)
         }),
-        color: new Color(0, 255, 0, 255),
-        material: "diffuse"
-    },
-    {
+        material: new Lambertian({
+            color: new Color(0, 255, 0, 255)
+        }),
+        radius: 0.02,
+        height: 0.05
+    }),
+    new Cylinder({
         name: "xAxisCylinder",
-        type: "cylinder",
-        height: 1,
-        radius: 0.01,
         transform: new Mat4({
             transforms: [
                 {
@@ -49,14 +49,14 @@ export const scene = [
                 }
             ]
         }),
-        color: new Color(255, 0, 0, 255),
-        material: "diffuse"
-    },
-    {
+        material: new Lambertian({
+            color: new Color(255, 0, 0, 255)
+        }),
+        radius: 0.01,
+        height: 1
+    }),
+    new Cone({
         name: "xAxisCone",
-        type: "cone",
-        height: 0.05,
-        radius: 0.02,
         transform: new Mat4({
             transforms: [
                 {
@@ -74,14 +74,14 @@ export const scene = [
                 }
             ]
         }),
-        color: new Color(255, 0, 0, 255),
-        material: "diffuse"
-    },
-    {
+        material: new Lambertian({
+            color: new Color(255, 0, 0, 255)
+        }),
+        radius: 0.02,
+        height: 0.05
+    }),
+    new Cylinder({
         name: "zAxisCylinder",
-        type: "cylinder",
-        height: 1,
-        radius: 0.01,
         transform: new Mat4({
             transforms: [
                 {
@@ -99,14 +99,14 @@ export const scene = [
                 }
             ]
         }),
-        color: new Color(0, 0, 255, 255),
-        material: "diffuse"
-    },
-    {
+        material: new Lambertian({
+            color: new Color(0, 0, 255, 255)
+        }),
+        radius: 0.01,
+        height: 1
+    }),
+    new Cone({
         name: "zAxisCone",
-        type: "cone",
-        height: 0.05,
-        radius: 0.02,
         transform: new Mat4({
             transforms: [
                 {
@@ -124,9 +124,12 @@ export const scene = [
                 }
             ]
         }),
-        color: new Color(0, 0, 255, 255),
-        material: "diffuse"
-    }
+        material: new Lambertian({
+            color: new Color(0, 0, 255, 255)
+        }),
+        radius: 0.02,
+        height: 0.05
+    })
 ];
 
 

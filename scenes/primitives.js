@@ -1,5 +1,10 @@
 import { randomColor } from "../utils.js";
 import { Mat4 } from "../math/mat4";
+import {Cylinder} from "../shapes/cylinder.js";
+import {Lambertian} from "../materials/lambertian.js";
+import {Metal} from "../materials/metal.js";
+import {Cone} from "../shapes/cone.js";
+import {Color} from "../math/color.js";
 
 export const scene = [
     // {
@@ -66,7 +71,7 @@ export const scene = [
     //     type: "box",
     //     material: "diffuse"
     // },
-    {
+    new Cylinder({
         name: "cylinder1",
         transform: new Mat4({
             transforms: [
@@ -85,13 +90,13 @@ export const scene = [
                 }
             ]
         }),
+        material: new Metal({
+            color: new Color(200, 200, 255, 255)
+        }),
         radius: 0.25,
         height: 0.75,
-        color: randomColor(),
-        type: "cylinder",
-        material: "metal"
-    },
-    {
+    }),
+    new Cylinder({
         name: "cylinder2",
         transform: new Mat4({
             transforms: [
@@ -103,13 +108,13 @@ export const scene = [
                 }
             ]
         }),
+        material: new Metal({
+            color: new Color(255, 200, 200, 255)
+        }),
         radius: 0.5,
         height: 0.25,
-        color: randomColor(),
-        type: "cylinder",
-        material: "metal"
-    },
-    {
+    }),
+    new Cone({
         name: "cone1",
         transform: new Mat4({
             transforms: [
@@ -128,12 +133,12 @@ export const scene = [
                 }
             ]
         }),
+        material: new Lambertian({
+            color: new Color(200, 255, 200, 255)
+        }),
         radius: 0.2,
         height: 0.4,
-        color: randomColor(),
-        type: "cone",
-        material: "diffuse"
-    },
+    }),
     // this sphere will act as the floor, underneath the other spheres
     // {
     //     name: "floor",

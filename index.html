@@ -82,18 +82,25 @@
         </div>
     </fieldset>
 
-<!--    <div class="view" data-view-id="positive-view">-->
-<!--        <h2>Positive view</h2>-->
-<!--        <p>In this view the camera is at like 1,1,1 in the positive octant, looking at the origin.</p>-->
-<!--        <div>-->
-<!--            <button class="renderButton">Render</button>-->
-<!--            <p>Rendering took <span class="duration"></span>s to complete</p>-->
-<!--        </div>-->
-<!--        <canvas></canvas>-->
-<!--    </div>-->
+    <label>
+        Select scene
+        <select id="sceneId">
+            <option value="primitives" selected>Primitives</option>
+            <option value="axes">Axes</option>
+        </select>
+    </label>
 
+    <div class="camera" data-camera-id="positive-camera">
+        <h2>Positive view</h2>
+        <p>In this view the camera is at like 1,1,1 in the positive octant, looking at the origin.</p>
+        <div>
+            <button class="renderButton">Render</button>
+            <p>Rendering took <span class="duration"></span>s to complete</p>
+        </div>
+        <canvas></canvas>
+    </div>
 
-    <div class="view" data-view-id="front-view">
+    <div class="camera" data-camera-id="front-camera">
         <h2>Front view</h2>
         <p>In this view the camera is in front of all the objects, staring down the +Z axis, so we're seeing the YX plane.</p>
         <div>
@@ -103,7 +110,7 @@
         <canvas></canvas>
     </div>
 
-    <div class="view" data-view-id="right-view">
+    <div class="camera" data-camera-id="right-camera">
         <h2>Right view</h2>
         <p>In this view the camera is to the right of all the objects, staring down the -X axis, so we're seeing the YZ plane.</p>
         <div>
@@ -113,7 +120,7 @@
         <canvas></canvas>
     </div>
 
-    <div class="view" data-view-id="top-view">
+    <div class="camera" data-camera-id="top-camera">
         <h2>Top-down view</h2>
         <p>In this view the camera is above all the objects, looking down upon them, staring down the -Y axis, so we're seeing the ZX plane.</p>
         <div>

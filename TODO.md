@@ -13,8 +13,8 @@
 - [ ] Implement lights
 - [x] Break up code into classes, like matrix, vector, each shape
   - [ ] do a performance analysis and see where we are performing redundant matrix ops
-    - [ ] can precompute inverse matrix for every object
-    - [ ] can precompute scene in main thread, including inverse matrix
+    - [x] can precompute inverse matrix for every object
+    - [x] can precompute scene in main thread, including inverse matrix
 - [ ] Implement shadows
 - [ ] Be able to swap in different scenes
   - [ ] Scene should probably be a JSON file

@@ -1,5 +1,20 @@
 import { Point2 } from "./math/point2.js";
 import { Size2 } from "./math/size2.js";
+import * as primitives from "./scenes/primitives.js";
+import * as axes from "./scenes/axes.js";
+import {cameras} from "./cameras.js";
+
+// let's precompute the inverse matrices for the scenes
+
+function computeInverseTransforms() {
+    for (const scene of [primitives.scene, axes.scene]) {
+        for (const obj of scene) {
+            obj.inverseTransform = obj.transform.toInverse();
+        }
+    }
+}
+
+computeInverseTransforms();
 
 function renderView(cameraId, currentCanvas, params) {
     return new Promise((resolve) => {
@@ -44,19 +59,42 @@ function renderView(cameraId, currentCanvas, params) {
             return currentTile.x < canvasSizeTiles.width && currentTile.y < canvasSizeTiles.height;
         }
 
+        // we should actually build the scene just once here
+        // build meaning compute the transform and inverse transform for each object
+        // and then we'll need to deserialize it in the worker
+        // but this can be a fast operation because the objects are intact
+        // so we just need the classes to have a fromObj or fromJSON constructor
+
+        let scene;
+        if (sceneId === "primitives") {
+            scene = primitives.scene;
+        } else if (sceneId === "axes") {
+            scene = axes.scene;
+        }
+
+        const sceneJSON = JSON.stringify(scene);
+
+        let camera = cameras.find(c => c.id === cameraId);
+
+        const cameraJSON = JSON.stringify(camera);
+
+        // okay the transforms and inverse transforms are already built by now
+        // the transforms are built when the modules are imported
+        // the inverses we computed at the top
+
         function assignWork(worker) {
             if (isCurrentTileValid()) {
 
                 // I want to use classes but postMessage strips classes into simple objects
                 worker.postMessage({
                     type: "processTile",
-                    cameraId,
+                    cameraJSON,
                     topLeft: new Point2(currentTile.x * tileSize.width, currentTile.y * tileSize.height),
                     tileSize,
                     canvasSize,
                     samplesPerPixel,
                     maxBounces,
-                    sceneId
+                    sceneJSON
                 });
 
                 incrementCurrentTile();

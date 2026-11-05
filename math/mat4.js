@@ -206,6 +206,7 @@ export class Mat4 {
         return this.T;
     }
 
+    // possibly around 150 flops
     static getRotationMatrix(angle, unit, direction, axis) {
         const angleRadians = unit === "degrees" ? degreesToRadians(angle) : angle;
         if (axis.toUpperCase() === "Z") {
@@ -214,8 +215,8 @@ export class Mat4 {
             const yAngle = Math.PI / 2 + angleDirected;
             return new Mat4({
                 X: new Vec4(
-                    Math.cos(xAngle),
-                    Math.sin(xAngle),
+                    Math.cos(xAngle), // around 30 flops
+                    Math.sin(xAngle), // around 30 flops
                     0,
                     0
                 ),
@@ -265,6 +266,7 @@ export class Mat4 {
         }
     }
 
+    // 262 flops
     rotate(angle, unit, direction, axis) {
         this.m = this.times(Mat4.getRotationMatrix(angle, unit, direction, axis)).m;
     }
@@ -281,6 +283,7 @@ export class Mat4 {
     // allow both vectors and matrices
     times(multiplier) {
         if (multiplier instanceof Vec4) {
+            // 4 * 7 flops = 28 flops
             return new multiplier.constructor(
                 multiplier.dot(this.A),
                 multiplier.dot(this.B),
@@ -288,6 +291,7 @@ export class Mat4 {
                 multiplier.dot(this.D)
             );
         } else if (multiplier instanceof Mat4) {
+            // 4 * 28 flops = 112 flops
             return new Mat4({
                 X: this.times(multiplier.X),
                 Y: this.times(multiplier.Y),
@@ -297,6 +301,7 @@ export class Mat4 {
         }
     }
 
+    // 24 flops
     toInverse() {
         return new Mat4({
             A: new Vec4(
@@ -318,6 +323,18 @@ export class Mat4 {
                 -this.T.dot(this.Z)
             )
         });
+    }
+
+    toJSON() {
+        return {...this, className: "Mat4"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Mat4();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
     }
 }
 

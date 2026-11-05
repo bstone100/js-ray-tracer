@@ -13,11 +13,9 @@ export class Sphere extends Shape {
     }
 
     hit_test(ray) {
-        const worldToShape = this.transform.toInverse();
-
         const localRay = new Ray(
-            worldToShape.times(ray.origin),
-            worldToShape.times(ray.direction)
+            this.inverseTransform.times(ray.origin), // this could be precomputed because ray origin is the same for all rays
+            this.inverseTransform.times(ray.direction)
         );
 
         const a = localRay.direction.dot(localRay.direction);
@@ -39,9 +37,21 @@ export class Sphere extends Shape {
     }
 
     surface_normal(hit_record) {
-        const localPoint = this.transform.toInverse().times(hit_record.point);
+        const localPoint = this.inverseTransform.times(hit_record.point);
         const N = new Vec3(localPoint.x, localPoint.y, localPoint.z);
         return this.transform.times(N);
+    }
+
+    toJSON() {
+        return {...this, className: "Sphere"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Sphere();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
     }
 }
 

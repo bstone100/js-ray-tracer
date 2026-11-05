@@ -13,6 +13,18 @@ export class Lambertian extends Material {
             surfaceNormal.plus(Vec4.randomUnitVector()).toUnit()
         );
     }
+
+    toJSON() {
+        return {...this, className: "Lambertian"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Lambertian();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
+    }
 }
 
 

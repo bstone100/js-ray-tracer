@@ -15,11 +15,9 @@ export class Cone extends Shape {
     }
 
     hit_test(ray) {
-        const worldToShape = this.transform.toInverse();
-
         const localRay = new Ray(
-            worldToShape.times(ray.origin),
-            worldToShape.times(ray.direction)
+            this.inverseTransform.times(ray.origin),
+            this.inverseTransform.times(ray.direction)
         );
 
         const k1 = Math.pow(this.radius, 2) / Math.pow(this.height, 2);
@@ -96,7 +94,7 @@ export class Cone extends Shape {
     }
 
     surface_normal(hit_record) {
-        const localPoint = this.transform.toInverse().times(hit_record.point);
+        const localPoint = this.inverseTransform.times(hit_record.point);
 
         let N;
         switch (hit_record.surface) {
@@ -109,6 +107,18 @@ export class Cone extends Shape {
         }
 
         return this.transform.times(N);
+    }
+
+    toJSON() {
+        return {...this, className: "Cone"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Cone();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
     }
 }
 

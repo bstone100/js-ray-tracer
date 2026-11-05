@@ -41,6 +41,7 @@ export class Vec4 {
         }
     }
 
+    // 7 flops
     dot(vec4) {
         return this.x * vec4.x + this.y * vec4.y + this.z * vec4.z + this.w * vec4.w;
     }

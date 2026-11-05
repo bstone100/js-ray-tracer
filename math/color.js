@@ -36,4 +36,16 @@ export class Color extends Vec4 {
     set a(val) {
         this.w = val;
     }
+
+    toJSON() {
+        return {...this, className: "Color"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Color();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
+    }
 }

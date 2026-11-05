@@ -15,11 +15,9 @@ export class Cylinder extends Shape {
     }
 
     hit_test(ray) {
-        const worldToShape = this.transform.toInverse();
-
         const localRay = new Ray(
-            worldToShape.times(ray.origin),
-            worldToShape.times(ray.direction)
+            this.inverseTransform.times(ray.origin),
+            this.inverseTransform.times(ray.direction)
         );
 
         const upperPlaneT = (this.height / 2 - localRay.origin.y) / localRay.direction.y;
@@ -109,7 +107,7 @@ export class Cylinder extends Shape {
     }
 
     surface_normal(hit_record) {
-        const localPoint = this.transform.toInverse().times(hit_record.point);
+        const localPoint = this.inverseTransform.times(hit_record.point);
 
         let N;
         switch (hit_record.surface) {
@@ -119,6 +117,18 @@ export class Cylinder extends Shape {
         }
 
         return this.transform.times(N);
+    }
+
+    toJSON() {
+        return {...this, className: "Cylinder"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Cylinder();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
     }
 }
 

@@ -17,6 +17,18 @@ export class Metal extends Material {
             direction.toUnit()
         );
     }
+
+    toJSON() {
+        return {...this, className: "Metal"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Metal();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
+    }
 }
 
 

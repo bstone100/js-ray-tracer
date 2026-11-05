@@ -18,11 +18,9 @@ export class Box extends Shape {
     }
 
     hit_test(ray) {
-        const worldToShape = this.transform.toInverse();
-
         const localRay = new Ray(
-            worldToShape.times(ray.origin),
-            worldToShape.times(ray.direction)
+            this.inverseTransform.times(ray.origin),
+            this.inverseTransform.times(ray.direction)
         );
 
         const boxMin = new Point3(
@@ -116,6 +114,18 @@ export class Box extends Shape {
             case "front": N = new Vec3(0, 0, 1); break;
         }
         return this.transform.times(N);
+    }
+
+    toJSON() {
+        return {...this, className: "Box"};
+    }
+
+    static fromJSON(inObj) {
+        const outObj = new Box();
+        for (const propName in inObj) {
+            outObj[propName] = inObj[propName];
+        }
+        return outObj;
     }
 }
 
